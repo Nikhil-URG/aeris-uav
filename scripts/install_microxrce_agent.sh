@@ -8,6 +8,8 @@ if [[ $EUID -eq 0 ]]; then
   exit 1
 fi
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 VERSION="${MICRO_XRCE_AGENT_VERSION:-v2.4.3}"
 SRC_DIR="${AERIS_XRCE_DIR:-$HOME/aeris_dev/Micro-XRCE-DDS-Agent}"
 
@@ -71,4 +73,4 @@ else
   echo "ERROR: installation completed but MicroXRCEAgent is not on PATH." >&2
   exit 1
 fi
-echo "Next: bash scripts/build.sh"
+echo "Next: bash $ROOT/scripts/build.sh"

@@ -9,6 +9,8 @@ if [[ $EUID -eq 0 ]]; then
   exit 1
 fi
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 . /etc/os-release
 if [[ "${VERSION_ID:-}" != "24.04" && "${AERIS_FORCE:-0}" != "1" ]]; then
   echo "ERROR: expected Ubuntu/Pop!_OS 24.04, found ${PRETTY_NAME:-unknown}." >&2
@@ -97,4 +99,4 @@ echo "  source /opt/ros/jazzy/setup.bash"
 echo "  ros2 --version"
 echo "  printenv ROS_DISTRO"
 echo
-echo "Next: bash scripts/bootstrap_px4.sh"
+echo "Next: bash $ROOT/scripts/bootstrap_px4.sh"

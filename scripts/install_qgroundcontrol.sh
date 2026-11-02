@@ -7,6 +7,8 @@ if [[ $EUID -eq 0 ]]; then
   exit 1
 fi
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 QGC_VERSION="${QGC_VERSION:-v5.1.5}"
 DEST="${QGC_DIR:-$HOME/Applications}"
 APP="$DEST/QGroundControl.AppImage"
@@ -48,4 +50,4 @@ sha256sum "$APP" | tee "$APP.sha256"
 
 echo
 echo "QGroundControl installed: $APP"
-echo "Run: $PWD/scripts/run_qgroundcontrol.sh"
+echo "Run: $ROOT/scripts/run_qgroundcontrol.sh"
