@@ -2,7 +2,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 1 — simulation foundation and read-only telemetry monitor.
+**Current status:** Week 1 — scaffold complete; environment installation and Milestone 1 verification pending.
 
 ## Mission
 
@@ -148,6 +148,13 @@ Run the telemetry monitor in another:
 ```bash
 source scripts/aeris_env.sh
 ros2 launch aeris_bringup telemetry.launch.py
+```
+
+Optional ground station:
+
+```bash
+bash scripts/install_qgroundcontrol.sh
+scripts/run_qgroundcontrol.sh
 ```
 
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
