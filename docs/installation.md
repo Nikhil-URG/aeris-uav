@@ -121,7 +121,7 @@ Verify:
 source scripts/aeris_env.sh
 cd ~/aeris_dev/PX4-Autopilot
 git describe --tags
-gz sim --version
+gz sim --versions | head -1
 ```
 
 Expected: `v1.17.0` and a Gazebo Harmonic version (`8.x`).

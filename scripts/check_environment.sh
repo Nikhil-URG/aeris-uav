@@ -63,7 +63,12 @@ fi
 
 section "Simulation"
 if command -v gz >/dev/null 2>&1; then
-  ok "Gazebo installed ($(gz sim --version 2>/dev/null | head -1))"
+  GZ_VERSION="$(gz sim --versions 2>/dev/null | head -1 | tr -d ' ')"
+  if [[ -n "$GZ_VERSION" ]]; then
+    ok "Gazebo installed ($GZ_VERSION)"
+  else
+    ok "Gazebo installed (version query failed)"
+  fi
 else
   fail "Gazebo missing; run: bash scripts/bootstrap_px4.sh"
 fi

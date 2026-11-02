@@ -87,6 +87,6 @@ echo
 echo "PX4 and Gazebo setup complete."
 echo "Verify:"
 echo "  cd $PX4_DIR && git describe --tags"
-echo "  gz sim --version"
+echo "  gz sim --versions | head -1"
 echo
 echo "Next: bash $ROOT/scripts/install_microxrce_agent.sh"
