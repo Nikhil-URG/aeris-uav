@@ -73,6 +73,8 @@ echo "[4/5] Installing ROS 2 Jazzy"
 sudo env DEBIAN_FRONTEND=noninteractive apt-get update
 sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y \
   ros-jazzy-desktop \
+  ros-jazzy-rosidl-default-generators \
+  ros-jazzy-rosidl-default-runtime \
   ros-dev-tools \
   python3-colcon-common-extensions \
   python3-vcstool \
