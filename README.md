@@ -88,6 +88,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── models/
 │   └── scenarios/
 ├── scripts/
+│   ├── setup.sh
 │   ├── aeris_env.sh
 │   ├── install_dependencies.sh
 │   ├── bootstrap_px4.sh
@@ -122,6 +123,12 @@ PX4-Autopilot lives outside this repository at `~/aeris_dev/PX4-Autopilot` by de
 ## Quick start
 
 Run the one-time setup as your **normal user** (the scripts request `sudo` internally):
+
+```bash
+bash scripts/setup.sh
+```
+
+Or run the stages individually:
 
 ```bash
 bash scripts/install_dependencies.sh   # system tools + ROS 2 Jazzy

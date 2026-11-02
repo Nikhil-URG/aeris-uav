@@ -48,6 +48,16 @@ python3 --version    # must be Python 3.12.x
 
 Do not run PX4's `Tools/setup/ubuntu.sh` directly from a conda shell. `scripts/bootstrap_px4.sh` sanitizes the environment first.
 
+## One-command setup
+
+Run as your **normal user**, not with `sudo`:
+
+```bash
+bash scripts/setup.sh
+```
+
+This runs the four stages below in order. If you prefer to inspect each stage, run them individually.
+
 ## 1. System dependencies and ROS 2 Jazzy
 
 Run as your **normal user**, not with `sudo`:

@@ -66,7 +66,7 @@ Establish the machine state before installing anything, then create a reproducib
 - `aeris_flight_control` C++ package with the read-only `telemetry_monitor` node.
 - `aeris_bringup` Python package with a telemetry launch file and YAML parameters.
 - `px4_msgs` submodule pinned to `v1.17.0`.
-- Setup scripts for system/ROS, PX4/Gazebo, Micro XRCE-DDS Agent, QGC, build, simulation launch, and environment checks.
+- Setup scripts for system/ROS, PX4/Gazebo, Micro XRCE-DDS Agent, QGC, build, simulation launch, environment checks, and a one-command orchestrator (`scripts/setup.sh`).
 - Architecture, installation, flight-control and mission-design documentation.
 
 ### Commands run (audit only, no installs yet)
