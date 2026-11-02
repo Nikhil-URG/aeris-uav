@@ -72,8 +72,8 @@ The script installs:
 - Python tooling: `python3`, `python3-pip`, `python3-venv`
 - ROS 2 development tools: `colcon`, `vcstool`, `rosdep`
 - the official ROS 2 apt source package (`ros2-apt-source` 1.3.0, `noble`)
-- `ros-jazzy-desktop` and `ros-dev-tools`
-- libraries needed by the DDS agent and QGC AppImage
+- `ros-jazzy-desktop`, the ROS IDL generators, and `ros-dev-tools`
+- libraries needed to build the DDS agent (QGC installs its own runtime libraries)
 
 It does **not** run a blanket `apt upgrade`. On a Pop!_OS workstation, a broad upgrade can pull desktop and kernel changes unrelated to AERIS; those should be handled separately.
 

@@ -88,7 +88,7 @@ The next executable will be an offboard controller. The intended sequence is:
    - Refuse to arm if any check fails.
 2. **Offboard heartbeat**
    - Publish `/fmu/in/offboard_control_mode` with the position-control bit set.
-   - Publish a valid `/fmu/in/trajectory_setpoint` at a steady rate (target 20 Hz; the PX4 timeout is 500 ms, so never rely on the minimum).
+   - Publish a valid `/fmu/in/trajectory_setpoint` at a steady rate (target 20 Hz). PX4's offboard-loss timeout is short, so never rely on the minimum; verify the configured `COM_OF_LOSS_T` during the Week 2 tests.
    - Stream for at least one second before requesting offboard mode.
 3. **Mode and arming**
    - Send `VEHICLE_CMD_DO_SET_MODE` with `PX4_CUSTOM_MAIN_MODE_OFFBOARD`.
