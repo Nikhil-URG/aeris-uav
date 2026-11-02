@@ -1,0 +1,43 @@
+# ROS 2 / colcon build artifacts
+build/
+install/
+log/
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Editors and local tooling
+.vscode/
+.idea/
+*.swp
+*~
+compile_commands.json
+
+# Result artifacts (keep the directory placeholders)
+results/logs/*
+results/plots/*
+results/reports/*
+!results/logs/.gitkeep
+!results/plots/.gitkeep
+!results/reports/.gitkeep
+
+# Simulation and log artifacts
+*.bag
+*.db3
+*.mcap
+*.log
+
+# External PX4 checkout (kept outside this repository by default)
+PX4-Autopilot/
+
+# OS noise
+.DS_Store
+Thumbs.db
