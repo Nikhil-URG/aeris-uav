@@ -440,6 +440,74 @@ Week 5: depth/lidar perception, obstacle detection, local planning and replannin
 
 ---
 
+## 2026-11-09 — Week 5: lidar obstacle detection and reactive replanning
+
+### Goal
+
+Detect an obstacle on the inspection path and replan around it without leaving the offboard flight architecture.
+
+### Implemented
+
+- `aeris_interfaces`: `Obstacle` and `ObstacleArray`.
+- `aeris_navigation` C++ package:
+  - forward-cone minimum-range analysis;
+  - 10° sector obstacle map across the 270° scan;
+  - `ObstacleArray` publisher;
+  - 4 gtest cases for scan analysis.
+- `aeris_bringup`:
+  - `config/gz_lidar_bridge.yaml`;
+  - `launch/navigation.launch.py`.
+- Simulation:
+  - `simulation/models/tall_obstacle` (1 × 1 × 6 m);
+  - `scripts/spawn_obstacle.sh`.
+- Mission manager:
+  - subscribes to `/aeris/navigation/obstacles`;
+  - checks the corridor to the target;
+  - logs `obstacle_detected`, computes a lateral midpoint detour and logs `replan`;
+  - sends the detour goal, then the original waypoint.
+
+### Result — obstacle mission
+
+| Metric | Result |
+|---|---|
+| Lidar | 270°, 1080 samples, ~30 Hz |
+| Forward obstacle | 3.75 m, bearing −0.204 rad |
+| Replan detour | `(1.54, 1.94, −5.0)` |
+| Original wp_02 | reached after detour |
+| Mission | `COMPLETE` |
+| Navigation tests | 4/4 passing |
+
+Evidence:
+
+- `docs/experiments/week5_mission.jsonl`
+- `docs/experiments/week5_navigation.log`
+- `docs/experiments/week5_mission_run.log`
+- `docs/navigation.md`
+
+### Issues and decisions
+
+1. **The target direction was not aligned with the lidar's forward cone.**
+   - The lidar is 270° wide; the target can be 90° off the vehicle heading.
+   - Fix: publish sector obstacles across the whole scan and have the mission manager evaluate the corridor to the target, not just the forward cone.
+
+2. **The obstacle sat just outside the initial 3 m threshold.**
+   - The corridor range at the check was 3.75 m.
+   - Fix: use a 4 m path-clearance threshold. The replan then triggered deterministically.
+
+3. **The simulated battery drains across long sessions.**
+   - A stale sim reported `battery_unhealthy` and blocked preflight.
+   - Fix: restart the SITL session for a clean battery before a test campaign.
+
+4. **PX4 local origin vs Gazebo world origin is not exact.**
+   - Spawned models are offset slightly from the nominal local-frame path.
+   - The lidar-relative corridor check is robust to this for the demo; precise map alignment is a future refinement.
+
+### Next
+
+Week 6: safety supervision, fault injection, failsafe/return-to-launch behaviour and automated tests.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

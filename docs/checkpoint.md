@@ -1,13 +1,14 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-09  
-**Phase:** Week 4 complete — Week 5 (navigation) is next  
+**Phase:** Week 5 complete — Week 6 (safety) is next  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
 **Week 2 tag:** `week-2-checkpoint` (commit `0666e09`)  
 **Week 3 tag:** `week-3-checkpoint` (commit `ba262c9`)  
-**Week 4 tag:** `week-4-checkpoint` (this checkpoint commit)  
+**Week 4 tag:** `week-4-checkpoint` (commit `8618b01`)  
+**Week 5 tag:** `week-5-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -72,10 +73,14 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Perception | OpenCV red-panel detector, 4/4 tests |
 | Mission detections | 2/2 waypoints, confidence 1.0, range ~6.3 m |
 | Perception evidence | `docs/experiments/week4_mission.jsonl` |
+| Lidar | `gz_x500_lidar_2d`, 270°, ~30 Hz |
+| Navigation | Sector obstacle map + corridor check, 4/4 tests |
+| Obstacle replan | 3.75 m obstacle → detour `(1.54, 1.94)` → wp_02 reached |
+| Navigation evidence | `docs/experiments/week5_mission.jsonl` |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
-| Environment check | `16 ok, 0 warnings, 0 failures` |
+| Environment check | `17 ok, 0 warnings, 0 failures` |
 
-Milestone 1–4 acceptance are complete.
+Milestone 1–5 acceptance are complete.
 
 ---
 
@@ -92,6 +97,7 @@ Milestone 1–4 acceptance are complete.
 | Week 2 flight evidence | `docs/experiments/week2_offboard_run.log` |
 | Week 3 mission evidence | `docs/experiments/week3_mission.jsonl` |
 | Week 4 perception evidence | `docs/experiments/week4_mission.jsonl` |
+| Week 5 navigation evidence | `docs/experiments/week5_mission.jsonl` |
 | Development journal | `docs/experiments/development_log.md` |
 
 The machine is Pop!_OS 24.04 (Ubuntu 24.04 `noble` base) with an Intel i5-13420H, 15 GiB RAM, and an RTX 4050 Laptop GPU.
@@ -120,6 +126,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── flight_control.md           # telemetry + offboard contract/results
 │   ├── mission_design.md           # Week 3 state machine and mission schema
 │   ├── perception.md               # Week 4 camera + OpenCV detection
+│   ├── navigation.md               # Week 5 lidar + replanning
 │   ├── checkpoint.md               # this file
 │   └── experiments/
 │       ├── development_log.md
@@ -128,7 +135,10 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │       ├── week3_mission_run.log
 │       ├── week4_mission.jsonl
 │       ├── week4_mission_run.log
-│       └── week4_perception.log
+│       ├── week4_perception.log
+│       ├── week5_mission.jsonl
+│       ├── week5_mission_run.log
+│       └── week5_navigation.log
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
 │   ├── px4_msgs/                   # Git submodule, v1.17.0
@@ -136,6 +146,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── aeris_flight_control/       # C++ telemetry + offboard controller
 │   ├── aeris_mission_manager/      # Python mission manager
 │   ├── aeris_perception/           # OpenCV target detection
+│   ├── aeris_navigation/           # Lidar obstacle detection
 │   └── aeris_bringup/              # launch + YAML + missions
 ├── scripts/
 │   ├── setup.sh
@@ -148,35 +159,43 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── launch_simulation.sh
 │   ├── run_qgroundcontrol.sh
 │   ├── spawn_targets.sh
+│   ├── spawn_obstacle.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py         # Week 7 placeholder
 ├── simulation/
 │   ├── models/red_target/          # Week 4 inspection target
+│   ├── models/tall_obstacle/       # Week 5 obstacle
 │   ├── worlds/
 │   └── scenarios/
 ├── tests/                          # integration/scenario tests
 └── results/                        # logs/plots/reports (ignored)
 ```
 
-Key Week 2–4 files:
+Key Week 2–5 files:
 
 - `ros2_ws/src/aeris_flight_control/src/offboard_controller.cpp`
 - `ros2_ws/src/aeris_mission_manager/aeris_mission_manager/mission.py`
 - `ros2_ws/src/aeris_mission_manager/aeris_mission_manager/node.py`
 - `ros2_ws/src/aeris_perception/aeris_perception/detector.py`
 - `ros2_ws/src/aeris_perception/aeris_perception/node.py`
+- `ros2_ws/src/aeris_navigation/src/navigation_node.cpp`
+- `ros2_ws/src/aeris_navigation/include/aeris_navigation/scan_analysis.hpp`
 - `ros2_ws/src/aeris_bringup/config/offboard.yaml`
 - `ros2_ws/src/aeris_bringup/config/offboard_mission.yaml`
 - `ros2_ws/src/aeris_bringup/config/gz_camera_bridge.yaml`
+- `ros2_ws/src/aeris_bringup/config/gz_lidar_bridge.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/inspection_alpha.yaml`
 - `ros2_ws/src/aeris_bringup/launch/offboard.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/mission.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/perception.launch.py`
+- `ros2_ws/src/aeris_bringup/launch/navigation.launch.py`
 - `docs/flight_control.md`
 - `docs/perception.md`
+- `docs/navigation.md`
 - `docs/experiments/week2_offboard_run.log`
 - `docs/experiments/week3_mission.jsonl`
 - `docs/experiments/week4_mission.jsonl`
+- `docs/experiments/week5_mission.jsonl`
 
 ---
 
@@ -330,6 +349,17 @@ ros2 launch aeris_bringup perception.launch.py
 
 Then run the full mission as in §5.6. The JSONL log should contain `target_detected` events during each `INSPECT` phase.
 
+### 5.9 Lidar and obstacle-avoidance demo
+
+```bash
+PX4_SIM_MODEL=gz_x500_lidar_2d bash scripts/launch_simulation.sh
+bash scripts/spawn_obstacle.sh
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup navigation.launch.py
+```
+
+Then run the mission as in §5.6. The mission manager should log `obstacle_detected`, a lateral `replan`, reach the original waypoint and complete. Restart the SITL session between long test campaigns; the simulated battery drains and can block preflight.
+
 ---
 
 ## 6. Hard-won gotchas
@@ -425,6 +455,22 @@ If the PX4 instance changes, update `gz_camera_bridge.yaml`. Verify with `gz top
 
 The Week 4 ground projection assumes a nadir camera and square pixels. The downward camera can see the neighbouring target at the frame edge, and the projection is not a calibrated extrinsic solution. Detection is robust; precise localization is a later refinement.
 
+### 6.17 The lidar is 270°, but the target may not be forward
+
+The Week 5 mission manager originally checked only the forward cone and missed an obstacle 90° off the heading. `aeris_navigation` now publishes 10° sector obstacles across the full scan, and the mission manager evaluates the corridor toward the target. Do not reintroduce a forward-only assumption.
+
+### 6.18 The path-clearance threshold is 4 m
+
+The simulated obstacle sits near 3.75 m at the check point. The mission manager uses a 4 m path-clearance threshold. Lowering it can suppress a valid replan.
+
+### 6.19 The simulated battery drains over long sessions
+
+PX4's simulated battery can become `battery_unhealthy` after repeated flights in one session, which blocks preflight and looks like a software failure. Restart SITL for a clean battery before a test campaign.
+
+### 6.20 PX4 local frame vs Gazebo world
+
+Spawned models live in Gazebo world coordinates while the mission uses PX4 local NED. The origin offset is small but real; it can shift targets/obstacles by a few tenths of a metre. Use lidar/camera-relative checks or calibrate the spawn offset for precise map alignment.
+
 ---
 
 ## 7. Acceptance records
@@ -479,41 +525,61 @@ The Week 4 ground projection assumes a nadir camera and square pixels. The downw
 | Detection in mission JSONL | PASS |
 | Localization accuracy | APPROXIMATE — documented limitation |
 
-Evidence: `docs/experiments/week4_mission.jsonl`, `docs/experiments/week4_perception.log`.
+### Milestone 5 — navigation and obstacle avoidance
+
+| Check | Result |
+|---|---|
+| Lidar enabled | PASS — `gz_x500_lidar_2d`, 270°, ~30 Hz |
+| Sector obstacle map | PASS |
+| Navigation unit tests | PASS — 4/4 |
+| Obstacle detected | PASS — 3.75 m, bearing −0.204 rad |
+| Replan | PASS — detour `(1.54, 1.94, −5.0)` |
+| Original waypoint reached | PASS |
+| Mission | COMPLETE |
+
+Evidence: `docs/experiments/week5_mission.jsonl`, `docs/experiments/week5_navigation.log`.
 
 ---
 
-## 8. Week 5 plan — obstacle detection and local replanning
+## 8. Week 6 plan — safety, fault injection and failsafes
 
 ### Goal
 
-Add obstacle perception and a reactive local planner so the mission can detect a blocked path and replan around it.
+Add an independent safety supervisor that detects unhealthy conditions, injects faults on demand, and commands a safe outcome without bypassing the flight-control abstraction.
 
-### Approach
+### Deliverables
 
-- Use `gz_x500_lidar_2d` and bridge the Gazebo `LaserScan` to `/aeris/lidar/scan`.
-- Add `aeris_navigation` (C++) with:
-  - a LaserScan subscriber and forward-cone minimum range;
-  - an `ObstacleArray` publisher with bearing/range/blocked status;
-  - a simple vector-field / lateral-detour planner.
-- Mission manager integration:
-  - before transiting to a waypoint, check the navigation status;
-  - if the straight line is blocked, send a lateral detour goal, then continue to the original waypoint;
-  - log `obstacle_detected` and `replan` events in the mission JSONL.
-- Simulation:
-  - add a tall obstacle model and spawn it on the wp_01 → wp_02 path;
-  - verify the lidar sees it and the mission detours safely.
-- Tests:
-  - unit tests for the obstacle cone and detour logic;
-  - SITL obstacle mission with JSONL evidence.
+1. `aeris_interfaces`:
+   - `SafetyStatus.msg` (safe, active faults, pose age, battery, geofence, heartbeat age);
+   - `InjectFault.srv` (fault name, enable/disable);
+   - `SetSafetyAction.srv` or equivalent for RTL/land/hold.
+2. `aeris_safety` C++ package:
+   - monitor pose validity/freshness, battery, geofence, mission heartbeat and offboard stream;
+   - publish `/aeris/safety/status` at 10 Hz;
+   - injectable faults: stale pose, low battery, geofence breach, mission heartbeat loss;
+   - safe actions: call the offboard controller's `~/land`, `~/abort` and a new `~/rtl` service.
+3. `aeris_flight_control`:
+   - add `~/rtl` (`VEHICLE_CMD_NAV_RETURN_TO_LAUNCH`) while retaining the existing land/abort paths.
+4. `aeris_mission_manager`:
+   - subscribe to `SafetyStatus`;
+   - abort the mission when safety is not OK and record the reason.
+5. Tests:
+   - unit tests for the safety evaluation logic;
+   - SITL fault scenarios: stale pose during HOLD, low battery, geofence breach, mission heartbeat loss;
+   - verify RTL/land and JSONL evidence.
+6. `safety.launch.py` and config.
 
-### Week 5 acceptance
+### Week 6 acceptance
 
-- Lidar stream visible in ROS 2.
-- Obstacle detected before collision.
-- Mission logs `obstacle_detected` and `replan`.
-- Detour reaches the original waypoint without entering the obstacle radius.
-- No regression in the perception-backed mission.
+- Safety status visible and healthy in nominal flight.
+- Each injected fault produces a deterministic safe action.
+- The mission log records the fault and the abort/RTL.
+- The vehicle lands/returns without crashing.
+- No regression in the Week 5 obstacle mission.
+
+### Week 7 preview
+
+- Evaluation harness metrics, benchmark runs, plots, report and demo packaging.
 
 ---
 

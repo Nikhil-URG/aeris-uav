@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 4 complete — downward camera, OpenCV target detection and mission-log integration verified in SITL. Week 5 navigation is next.
+**Current status:** Week 5 complete — 2D lidar obstacle detection, corridor checking and reactive detour verified in SITL. Week 6 safety is next.
 
 ## Mission
 
@@ -77,6 +77,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── flight_control.md
 │   ├── mission_design.md
 │   ├── perception.md
+│   ├── navigation.md
 │   ├── checkpoint.md
 │   └── experiments/
 │       ├── development_log.md
@@ -85,7 +86,10 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── week3_mission_run.log
 │       ├── week4_mission.jsonl
 │       ├── week4_mission_run.log
-│       └── week4_perception.log
+│       ├── week4_perception.log
+│       ├── week5_mission.jsonl
+│       ├── week5_mission_run.log
+│       └── week5_navigation.log
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
 ├── ros2_ws/
@@ -95,6 +99,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── aeris_flight_control/
 │       ├── aeris_mission_manager/
 │       ├── aeris_perception/
+│       ├── aeris_navigation/
 │       └── aeris_bringup/
 ├── simulation/
 │   ├── worlds/
@@ -111,6 +116,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── launch_simulation.sh
 │   ├── run_qgroundcontrol.sh
 │   ├── spawn_targets.sh
+│   ├── spawn_obstacle.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py
 ├── tests/
@@ -236,6 +242,29 @@ ros2 launch aeris_bringup perception.launch.py
 
 The perception stack publishes `/aeris/perception/detections`; the mission manager records `target_detected` events during INSPECT. See [docs/perception.md](docs/perception.md) and [docs/experiments/week4_mission.jsonl](docs/experiments/week4_mission.jsonl).
 
+## Obstacle-avoidance demo
+
+Use the lidar airframe:
+
+```bash
+PX4_SIM_MODEL=gz_x500_lidar_2d bash scripts/launch_simulation.sh
+```
+
+Spawn the tall obstacle on the wp_01 → wp_02 path:
+
+```bash
+bash scripts/spawn_obstacle.sh
+```
+
+Start the lidar bridge and navigation node:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup navigation.launch.py
+```
+
+Run the mission as above. The mission manager logs `obstacle_detected` and `replan`, flies a lateral detour, then continues to the original waypoint. See [docs/navigation.md](docs/navigation.md) and [docs/experiments/week5_mission.jsonl](docs/experiments/week5_mission.jsonl).
+
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
 ## Resuming the project
@@ -260,7 +289,7 @@ The environment script is required because this machine has Miniforge first in `
 | 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Complete |
 | 3 | Mission manager: state machine, waypoints, validation, logging | Complete |
 | 4 | Perception: camera, OpenCV, target detection and localization | Complete |
-| 5 | Navigation: depth camera, obstacle detection, local replanning | Planned |
+| 5 | Navigation: depth camera, obstacle detection, local replanning | Complete |
 | 6 | Safety: fault injection, failsafes, RTL, automated tests | Planned |
 | 7 | Evaluation: benchmarks, experiment reports, demo | Planned |
 

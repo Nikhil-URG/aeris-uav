@@ -13,9 +13,19 @@ from pathlib import Path
 import threading
 import time
 
-from aeris_interfaces.msg import DetectionArray, FlightStatus, MissionStatus
+from aeris_interfaces.msg import (
+    DetectionArray,
+    FlightStatus,
+    MissionStatus,
+    ObstacleArray,
+)
 from aeris_interfaces.srv import GoTo
-from aeris_mission_manager.mission import Mission, MissionValidationError, load_mission
+from aeris_mission_manager.mission import (
+    Mission,
+    MissionValidationError,
+    Waypoint,
+    load_mission,
+)
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Trigger
@@ -46,6 +56,13 @@ class MissionManager(Node):
         self.declare_parameter(
             "detections_topic", "/aeris/perception/detections"
         )
+        self.declare_parameter(
+            "obstacle_topic", "/aeris/navigation/obstacles"
+        )
+        self.declare_parameter("avoidance_offset_m", 2.5)
+        self.declare_parameter("obstacle_data_timeout_s", 1.0)
+        self.declare_parameter("path_clearance_cone_deg", 30.0)
+        self.declare_parameter("path_obstacle_threshold_m", 4.0)
 
         self._lock = threading.RLock()
         self._state = "IDLE"
@@ -57,6 +74,8 @@ class MissionManager(Node):
         self._flight_status: FlightStatus | None = None
         self._latest_detection: DetectionArray | None = None
         self._latest_detection_time = 0.0
+        self._latest_obstacle: ObstacleArray | None = None
+        self._latest_obstacle_time = 0.0
         self._mission: Mission | None = None
         self._mission_error = ""
         self._run_dir: Path | None = None
@@ -130,6 +149,12 @@ class MissionManager(Node):
             DetectionArray,
             str(self.get_parameter("detections_topic").value),
             self._on_detections,
+            10,
+        )
+        self._obstacle_sub = self.create_subscription(
+            ObstacleArray,
+            str(self.get_parameter("obstacle_topic").value),
+            self._on_obstacles,
             10,
         )
         self._status_pub = self.create_publisher(
@@ -208,6 +233,11 @@ class MissionManager(Node):
         with self._lock:
             self._latest_detection = msg
             self._latest_detection_time = time.monotonic()
+
+    def _on_obstacles(self, msg: ObstacleArray) -> None:
+        with self._lock:
+            self._latest_obstacle = msg
+            self._latest_obstacle_time = time.monotonic()
 
     def _publish_status(self) -> None:
         msg = MissionStatus()
@@ -292,51 +322,16 @@ class MissionManager(Node):
                 target_id=waypoint.target_id,
             )
 
-            request = GoTo.Request()
-            request.x = waypoint.x
-            request.y = waypoint.y
-            request.z = waypoint.z
-            request.yaw = math.nan
-            request.tolerance_m = waypoint.tolerance_m
-            request.timeout_s = float(
-                self.get_parameter("waypoint_timeout_s").value
-            )
-            response = self._call_service(
-                self._goto_client, request, 10.0, "go_to"
-            )
-            if not response.accepted:
-                raise RuntimeError(
-                    f"go_to rejected for {waypoint.id}: {response.message}"
-                )
-
-            sequence = response.sequence
-            self._wait_for_flight(
-                lambda status, seq=sequence: (
-                    status.goal_sequence == seq
-                    and (
-                        status.goal_active
-                        or status.goal_reached
-                        or status.goal_failed
-                    )
-                ),
-                float(self.get_parameter("waypoint_accept_timeout_s").value),
-                f"goal acceptance for {waypoint.id}",
+            self._maybe_replan(waypoint, deadline)
+            self._send_goal(
+                waypoint.x,
+                waypoint.y,
+                waypoint.z,
+                waypoint.tolerance_m,
+                float(self.get_parameter("waypoint_timeout_s").value),
                 deadline,
-            )
-            self._wait_for_flight(
-                lambda status, seq=sequence: (
-                    status.goal_sequence == seq
-                    and (status.goal_reached or status.goal_failed)
-                ),
-                float(self.get_parameter("waypoint_timeout_s").value) + 10.0,
                 f"waypoint {waypoint.id}",
-                deadline,
             )
-
-            with self._lock:
-                status = self._flight_status
-            if status is None or status.goal_failed:
-                raise RuntimeError(f"waypoint {waypoint.id} was not reached")
 
             self._set_state("INSPECT", f"inspecting {waypoint.id}")
             self._log("waypoint_reached", index=index, id=waypoint.id)
@@ -390,47 +385,15 @@ class MissionManager(Node):
             self._set_state("TRANSIT", "returning to launch")
             self._log("rtl_transit", x=mission.home_x, y=mission.home_y,
                       z=-mission.cruise_altitude_m)
-            request = GoTo.Request()
-            request.x = mission.home_x
-            request.y = mission.home_y
-            request.z = -mission.cruise_altitude_m
-            request.yaw = math.nan
-            request.tolerance_m = mission.waypoint_tolerance_m
-            request.timeout_s = float(
-                self.get_parameter("waypoint_timeout_s").value
-            )
-            response = self._call_service(
-                self._goto_client, request, 10.0, "go_to (RTL)"
-            )
-            if not response.accepted:
-                raise RuntimeError(f"RTL rejected: {response.message}")
-            sequence = response.sequence
-            self._wait_for_flight(
-                lambda status, seq=sequence: (
-                    status.goal_sequence == seq
-                    and (
-                        status.goal_active
-                        or status.goal_reached
-                        or status.goal_failed
-                    )
-                ),
-                float(self.get_parameter("waypoint_accept_timeout_s").value),
-                "RTL goal acceptance",
+            self._send_goal(
+                mission.home_x,
+                mission.home_y,
+                -mission.cruise_altitude_m,
+                mission.waypoint_tolerance_m,
+                float(self.get_parameter("waypoint_timeout_s").value),
                 deadline,
-            )
-            self._wait_for_flight(
-                lambda status, seq=sequence: (
-                    status.goal_sequence == seq
-                    and (status.goal_reached or status.goal_failed)
-                ),
-                float(self.get_parameter("waypoint_timeout_s").value) + 10.0,
                 "RTL waypoint",
-                deadline,
             )
-            with self._lock:
-                status = self._flight_status
-            if status is None or status.goal_failed:
-                raise RuntimeError("RTL waypoint was not reached")
             self._log("rtl_reached")
 
         self._set_waypoint("")
@@ -454,6 +417,164 @@ class MissionManager(Node):
         with self._lock:
             self._success = True
         self._log("mission_complete")
+
+    def _send_goal(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        tolerance_m: float,
+        timeout_s: float,
+        deadline: float,
+        description: str,
+    ):
+        request = GoTo.Request()
+        request.x = x
+        request.y = y
+        request.z = z
+        request.yaw = math.nan
+        request.tolerance_m = tolerance_m
+        request.timeout_s = timeout_s
+        response = self._call_service(
+            self._goto_client, request, 10.0, f"go_to ({description})"
+        )
+        if not response.accepted:
+            raise RuntimeError(
+                f"go_to rejected for {description}: {response.message}"
+            )
+
+        sequence = response.sequence
+        self._wait_for_flight(
+            lambda status, seq=sequence: (
+                status.goal_sequence == seq
+                and (
+                    status.goal_active
+                    or status.goal_reached
+                    or status.goal_failed
+                )
+            ),
+            float(self.get_parameter("waypoint_accept_timeout_s").value),
+            f"goal acceptance for {description}",
+            deadline,
+        )
+        self._wait_for_flight(
+            lambda status, seq=sequence: (
+                status.goal_sequence == seq
+                and (status.goal_reached or status.goal_failed)
+            ),
+            timeout_s + 10.0,
+            description,
+            deadline,
+        )
+
+        with self._lock:
+            status = self._flight_status
+        if status is None or status.goal_failed:
+            raise RuntimeError(f"{description} was not reached")
+        return status
+
+    def _maybe_replan(self, waypoint: Waypoint, deadline: float) -> bool:
+        with self._lock:
+            obstacle = self._latest_obstacle
+            obstacle_time = self._latest_obstacle_time
+            status = self._flight_status
+
+        if obstacle is None or status is None:
+            return False
+
+        obstacle_timeout = float(
+            self.get_parameter("obstacle_data_timeout_s").value
+        )
+        if time.monotonic() - obstacle_time > obstacle_timeout:
+            return False
+
+        dx = waypoint.x - status.x
+        dy = waypoint.y - status.y
+        distance = math.hypot(dx, dy)
+        if distance < 1e-3:
+            return False
+
+        target_bearing_ned = math.atan2(dy, dx)
+        target_bearing_body = self._normalize_angle(
+            target_bearing_ned - status.yaw
+        )
+        cone_rad = math.radians(
+            float(self.get_parameter("path_clearance_cone_deg").value)
+        )
+        threshold_m = float(
+            self.get_parameter("path_obstacle_threshold_m").value
+        )
+
+        blocking_range = math.inf
+        blocking_offset = 0.0
+        for candidate in obstacle.obstacles:
+            observed_bearing_ned = self._normalize_angle(
+                status.yaw + float(candidate.bearing_rad)
+            )
+            offset = self._normalize_angle(
+                observed_bearing_ned - target_bearing_ned
+            )
+            if abs(offset) <= cone_rad and float(candidate.range_m) < blocking_range:
+                blocking_range = float(candidate.range_m)
+                blocking_offset = offset
+
+        self.get_logger().info(
+            f"Replan check {waypoint.id}: yaw={status.yaw:.2f} "
+            f"target_body={target_bearing_body:.2f} "
+            f"obstacles={len(obstacle.obstacles)} "
+            f"corridor_range={blocking_range:.2f}"
+        )
+
+        if not math.isfinite(blocking_range) or blocking_range >= threshold_m:
+            return False
+
+        self._log(
+            "obstacle_detected",
+            id=waypoint.id,
+            range_m=blocking_range,
+            bearing_rad=blocking_offset,
+            target_bearing_rad=target_bearing_body,
+        )
+
+        offset = float(self.get_parameter("avoidance_offset_m").value)
+        side = -1.0 if blocking_offset >= 0.0 else 1.0
+        perp_x = -dy / distance
+        perp_y = dx / distance
+        detour_x = status.x + 0.5 * dx + side * offset * perp_x
+        detour_y = status.y + 0.5 * dy + side * offset * perp_y
+
+        self._log(
+            "replan",
+            id=waypoint.id,
+            detour_x=detour_x,
+            detour_y=detour_y,
+            detour_z=waypoint.z,
+            obstacle_range_m=blocking_range,
+            obstacle_bearing_rad=blocking_offset,
+        )
+
+        self._send_goal(
+            detour_x,
+            detour_y,
+            waypoint.z,
+            waypoint.tolerance_m,
+            float(self.get_parameter("waypoint_timeout_s").value),
+            deadline,
+            f"detour for {waypoint.id}",
+        )
+
+        # Let the next scan refresh before deciding anything else.
+        with self._lock:
+            self._latest_obstacle_time = 0.0
+        return True
+
+    @staticmethod
+    def _normalize_angle(angle: float) -> float:
+        while angle > math.pi:
+            angle -= 2.0 * math.pi
+        while angle < -math.pi:
+            angle += 2.0 * math.pi
+        return angle
 
     def _abort_mission(self, mission: Mission, reason: str) -> None:
         with self._lock:

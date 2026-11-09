@@ -131,6 +131,12 @@ if command -v ros2 >/dev/null 2>&1; then
     warn "perception executable missing; rebuild the workspace"
   fi
 
+  if ros2 pkg executables aeris_navigation 2>/dev/null | grep -q 'navigation_node'; then
+    ok "navigation_node executable available"
+  else
+    warn "navigation_node executable missing; rebuild the workspace"
+  fi
+
   if ros2 pkg list 2>/dev/null | grep -q '^ros_gz_bridge$'; then
     ok "ros_gz_bridge installed"
   else

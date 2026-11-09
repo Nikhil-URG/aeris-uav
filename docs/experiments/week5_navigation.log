@@ -1,0 +1,9 @@
+[navigation_node-2] [INFO] [1794259235.387954130] [aeris_navigation]: AERIS navigation initialized: scan='/aeris/lidar/scan', output='/aeris/navigation/obstacles', forward_cone=70.0 deg, threshold=3.0 m.
+[navigation_node-2] [INFO] [1794259269.356243482] [aeris_navigation]: Obstacle ahead: range=2.93 m bearing=-0.46 rad (blocked).
+[navigation_node-2] [INFO] [1794259274.303199771] [aeris_navigation]: Obstacle ahead: range=1.15 m bearing=-0.61 rad (blocked).
+[navigation_node-2] [INFO] [1794259275.329011738] [aeris_navigation]: Obstacle ahead: range=2.66 m bearing=0.43 rad (blocked).
+[navigation_node-2] [INFO] [1794259424.901076367] [aeris_navigation]: Obstacle ahead: range=2.96 m bearing=-0.09 rad (blocked).
+[navigation_node-2] [INFO] [1794259425.930721229] [aeris_navigation]: Obstacle ahead: range=1.70 m bearing=0.17 rad (blocked).
+[navigation_node-2] [INFO] [1794259426.951890645] [aeris_navigation]: Obstacle ahead: range=0.58 m bearing=0.09 rad (blocked).
+[navigation_node-2] [INFO] [1794259431.669578952] [aeris_navigation]: Obstacle ahead: range=1.29 m bearing=-0.61 rad (blocked).
+[navigation_node-2] [INFO] [1794259432.695293508] [aeris_navigation]: Obstacle ahead: range=2.69 m bearing=0.41 rad (blocked).

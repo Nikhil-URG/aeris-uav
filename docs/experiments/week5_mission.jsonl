@@ -1,0 +1,26 @@
+{"timestamp": "2026-11-09T21:23:28.288138+00:00", "event": "mission_loaded", "mission": "inspection_alpha", "name": "inspection_alpha", "waypoints": 2, "mission_timeout_s": 180.0}
+{"timestamp": "2026-11-09T21:23:28.291088+00:00", "event": "mission_start", "mission": "inspection_alpha", "mission_file": "/home/lucifer/Documents/Project_Aeris/ros2_ws/install/aeris_bringup/share/aeris_bringup/config/missions/inspection_alpha.yaml"}
+{"timestamp": "2026-11-09T21:23:28.295075+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "PREFLIGHT", "message": "starting offboard controller"}
+{"timestamp": "2026-11-09T21:23:28.319860+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "TAKEOFF", "message": "waiting for takeoff and HOLD"}
+{"timestamp": "2026-11-09T21:23:38.877505+00:00", "event": "takeoff_confirmed", "mission": "inspection_alpha"}
+{"timestamp": "2026-11-09T21:23:38.878992+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "TRANSIT", "message": "transiting to wp_01 (inspect)"}
+{"timestamp": "2026-11-09T21:23:38.879101+00:00", "event": "waypoint_transit", "mission": "inspection_alpha", "index": 0, "id": "wp_01", "x": 4.0, "y": 0.0, "z": -5.0, "hold_s": 3.0, "action": "inspect", "target_id": "valve_a"}
+{"timestamp": "2026-11-09T21:23:40.963593+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "INSPECT", "message": "inspecting wp_01"}
+{"timestamp": "2026-11-09T21:23:40.963747+00:00", "event": "waypoint_reached", "mission": "inspection_alpha", "index": 0, "id": "wp_01"}
+{"timestamp": "2026-11-09T21:23:43.963929+00:00", "event": "target_not_detected", "mission": "inspection_alpha", "index": 0, "id": "wp_01", "target_id": "valve_a"}
+{"timestamp": "2026-11-09T21:23:43.964014+00:00", "event": "inspection_complete", "mission": "inspection_alpha", "index": 0, "id": "wp_01", "target_id": "valve_a"}
+{"timestamp": "2026-11-09T21:23:43.964444+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "TRANSIT", "message": "transiting to wp_02 (inspect)"}
+{"timestamp": "2026-11-09T21:23:43.964471+00:00", "event": "waypoint_transit", "mission": "inspection_alpha", "index": 1, "id": "wp_02", "x": 4.0, "y": 4.0, "z": -5.0, "hold_s": 3.0, "action": "inspect", "target_id": "gauge_b"}
+{"timestamp": "2026-11-09T21:23:43.964808+00:00", "event": "obstacle_detected", "mission": "inspection_alpha", "id": "wp_02", "range_m": 3.7477471828460693, "bearing_rad": -0.20408163957453285, "target_bearing_rad": -0.0994504541888186}
+{"timestamp": "2026-11-09T21:23:43.964837+00:00", "event": "replan", "mission": "inspection_alpha", "id": "wp_02", "detour_x": 1.5369926220934849, "detour_y": 1.9424184159717528, "detour_z": -5.0, "obstacle_range_m": 3.7477471828460693, "obstacle_bearing_rad": -0.20408163957453285}
+{"timestamp": "2026-11-09T21:23:47.876157+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "INSPECT", "message": "inspecting wp_02"}
+{"timestamp": "2026-11-09T21:23:47.876329+00:00", "event": "waypoint_reached", "mission": "inspection_alpha", "index": 1, "id": "wp_02"}
+{"timestamp": "2026-11-09T21:23:50.876512+00:00", "event": "target_not_detected", "mission": "inspection_alpha", "index": 1, "id": "wp_02", "target_id": "gauge_b"}
+{"timestamp": "2026-11-09T21:23:50.876593+00:00", "event": "inspection_complete", "mission": "inspection_alpha", "index": 1, "id": "wp_02", "target_id": "gauge_b"}
+{"timestamp": "2026-11-09T21:23:50.877101+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "TRANSIT", "message": "returning to launch"}
+{"timestamp": "2026-11-09T21:23:50.877219+00:00", "event": "rtl_transit", "mission": "inspection_alpha", "x": 0.0, "y": 0.0, "z": -5.0}
+{"timestamp": "2026-11-09T21:23:53.057188+00:00", "event": "rtl_reached", "mission": "inspection_alpha"}
+{"timestamp": "2026-11-09T21:23:53.058228+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "LAND", "message": "landing at current position"}
+{"timestamp": "2026-11-09T21:23:53.059057+00:00", "event": "landing", "mission": "inspection_alpha"}
+{"timestamp": "2026-11-09T21:24:04.179803+00:00", "event": "state_transition", "mission": "inspection_alpha", "state": "COMPLETE", "message": "mission complete"}
+{"timestamp": "2026-11-09T21:24:04.179874+00:00", "event": "mission_complete", "mission": "inspection_alpha"}

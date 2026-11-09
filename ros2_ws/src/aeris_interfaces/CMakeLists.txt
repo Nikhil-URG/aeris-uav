@@ -10,6 +10,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DetectionArray.msg"
   "msg/FlightStatus.msg"
   "msg/MissionStatus.msg"
+  "msg/Obstacle.msg"
+  "msg/ObstacleArray.msg"
   "srv/GoTo.srv"
   DEPENDENCIES builtin_interfaces
 )

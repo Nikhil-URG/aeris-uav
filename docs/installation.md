@@ -269,6 +269,31 @@ ros2 launch aeris_bringup perception.launch.py
 
 Then run the mission as above. The mission manager records `target_detected` events during each inspection hold. See [perception.md](perception.md).
 
+### Lidar + obstacle-avoidance demo
+
+Start the lidar airframe:
+
+```bash
+PX4_SIM_MODEL=gz_x500_lidar_2d bash scripts/launch_simulation.sh
+```
+
+Spawn the tall obstacle on the wp_01 → wp_02 path:
+
+```bash
+bash scripts/spawn_obstacle.sh
+```
+
+Start the lidar bridge and navigation node:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup navigation.launch.py
+```
+
+Run the mission as above. The mission manager logs `obstacle_detected` and `replan`, flies a lateral detour, then continues to the original waypoint. See [navigation.md](navigation.md).
+
+Restart the SITL session between long test campaigns: the simulated battery drains over time and can block preflight checks.
+
 ## 6. QGroundControl (optional but recommended)
 
 ```bash

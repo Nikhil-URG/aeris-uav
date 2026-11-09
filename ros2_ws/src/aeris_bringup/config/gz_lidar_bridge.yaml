@@ -1,0 +1,7 @@
+# Gazebo -> ROS 2 bridge for the X500 2D lidar.
+# Topic confirmed after launching gz_x500_lidar_2d.
+- ros_topic_name: "/aeris/lidar/scan"
+  gz_topic_name: "/world/default/model/x500_lidar_2d_0/link/link/sensor/lidar_2d_v2/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
