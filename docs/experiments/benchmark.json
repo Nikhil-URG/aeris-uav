@@ -1,0 +1,363 @@
+{
+  "generated_at": "2026-11-09T22:05:32.640087+00:00",
+  "aggregate": {
+    "runs": 8,
+    "completed": 4,
+    "safety_aborts": 4,
+    "aborted_other": 0,
+    "planned_completion_success_rate": 1.0,
+    "mean_duration_s": 40.319,
+    "min_duration_s": 33.772,
+    "max_duration_s": 55.092,
+    "total_detections": 2,
+    "mean_confidence": 1.0,
+    "mean_detection_rate": 1.0,
+    "total_obstacle_detections": 1,
+    "total_replans": 1,
+    "safety_faults": {
+      "geofence_breach": 1,
+      "low_battery": 1,
+      "mission_heartbeat_loss": 1,
+      "stale_pose": 1
+    }
+  },
+  "runs": [
+    {
+      "run": "week3_mission",
+      "evidence": "docs/experiments/week3_mission.jsonl",
+      "mission": "inspection_alpha",
+      "scenario": "nominal",
+      "outcome": "complete",
+      "success": true,
+      "duration_s": 33.772,
+      "takeoff_s": 10.265,
+      "landing_s": 11.215,
+      "rtl_transit_s": 2.179,
+      "waypoints_total": 2,
+      "waypoints_reached": 2,
+      "waypoints_completed": 2,
+      "waypoints": [
+        {
+          "id": "wp_01",
+          "transit_s": 2.079,
+          "hold_s": 3.0,
+          "reached": true,
+          "inspected": true
+        },
+        {
+          "id": "wp_02",
+          "transit_s": 2.028,
+          "hold_s": 3.0,
+          "reached": true,
+          "inspected": true
+        }
+      ],
+      "mean_transit_s": 2.054,
+      "mean_hold_s": 3.0,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 0,
+      "safety_faults": [],
+      "safety_action": "",
+      "state_transitions": 8
+    },
+    {
+      "run": "week4_mission",
+      "evidence": "docs/experiments/week4_mission.jsonl",
+      "mission": "inspection_alpha",
+      "scenario": "perception",
+      "outcome": "complete",
+      "success": true,
+      "duration_s": 36.523,
+      "takeoff_s": 11.332,
+      "landing_s": 11.727,
+      "rtl_transit_s": 2.586,
+      "waypoints_total": 2,
+      "waypoints_reached": 2,
+      "waypoints_completed": 2,
+      "waypoints": [
+        {
+          "id": "wp_01",
+          "transit_s": 2.482,
+          "hold_s": 3.001,
+          "reached": true,
+          "inspected": true
+        },
+        {
+          "id": "wp_02",
+          "transit_s": 2.386,
+          "hold_s": 3.0,
+          "reached": true,
+          "inspected": true
+        }
+      ],
+      "mean_transit_s": 2.434,
+      "mean_hold_s": 3.0,
+      "detections": 2,
+      "detection_rate": 1.0,
+      "mean_confidence": 1.0,
+      "min_range_m": 6.271,
+      "max_range_m": 6.28,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 0,
+      "safety_faults": [],
+      "safety_action": "",
+      "state_transitions": 9
+    },
+    {
+      "run": "week5_mission",
+      "evidence": "docs/experiments/week5_mission.jsonl",
+      "mission": "inspection_alpha",
+      "scenario": "obstacle",
+      "outcome": "complete",
+      "success": true,
+      "duration_s": 35.889,
+      "takeoff_s": 10.586,
+      "landing_s": 11.121,
+      "rtl_transit_s": 2.18,
+      "waypoints_total": 2,
+      "waypoints_reached": 2,
+      "waypoints_completed": 2,
+      "waypoints": [
+        {
+          "id": "wp_01",
+          "transit_s": 2.085,
+          "hold_s": 3.0,
+          "reached": true,
+          "inspected": true
+        },
+        {
+          "id": "wp_02",
+          "transit_s": 3.912,
+          "hold_s": 3.0,
+          "reached": true,
+          "inspected": true
+        }
+      ],
+      "mean_transit_s": 2.998,
+      "mean_hold_s": 3.0,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 1,
+      "replans": 1,
+      "detour": {
+        "x": 1.537,
+        "y": 1.942,
+        "z": -5.0
+      },
+      "safety_aborts": 0,
+      "safety_faults": [],
+      "safety_action": "",
+      "state_transitions": 9
+    },
+    {
+      "run": "week6_geofence_breach_mission",
+      "evidence": "docs/experiments/week6_geofence_breach_mission.jsonl",
+      "mission": "safety_test",
+      "scenario": "safety_geofence_breach",
+      "outcome": "safety_abort",
+      "success": false,
+      "duration_s": 14.398,
+      "takeoff_s": 10.313,
+      "landing_s": null,
+      "rtl_transit_s": null,
+      "waypoints_total": 1,
+      "waypoints_reached": 1,
+      "waypoints_completed": 0,
+      "waypoints": [
+        {
+          "id": "wp_safety",
+          "transit_s": 1.877,
+          "hold_s": null,
+          "reached": true,
+          "inspected": false
+        }
+      ],
+      "mean_transit_s": 1.877,
+      "mean_hold_s": null,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 1,
+      "safety_faults": [
+        "geofence_breach"
+      ],
+      "safety_action": "rtl",
+      "state_transitions": 4
+    },
+    {
+      "run": "week6_low_battery_mission",
+      "evidence": "docs/experiments/week6_low_battery_mission.jsonl",
+      "mission": "safety_test",
+      "scenario": "safety_low_battery",
+      "outcome": "safety_abort",
+      "success": false,
+      "duration_s": 14.451,
+      "takeoff_s": 10.317,
+      "landing_s": null,
+      "rtl_transit_s": null,
+      "waypoints_total": 1,
+      "waypoints_reached": 1,
+      "waypoints_completed": 0,
+      "waypoints": [
+        {
+          "id": "wp_safety",
+          "transit_s": 1.929,
+          "hold_s": null,
+          "reached": true,
+          "inspected": false
+        }
+      ],
+      "mean_transit_s": 1.929,
+      "mean_hold_s": null,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 1,
+      "safety_faults": [
+        "low_battery"
+      ],
+      "safety_action": "rtl",
+      "state_transitions": 4
+    },
+    {
+      "run": "week6_mission_heartbeat_loss_mission",
+      "evidence": "docs/experiments/week6_mission_heartbeat_loss_mission.jsonl",
+      "mission": "safety_test",
+      "scenario": "safety_mission_heartbeat_loss",
+      "outcome": "safety_abort",
+      "success": false,
+      "duration_s": 13.396,
+      "takeoff_s": 10.309,
+      "landing_s": null,
+      "rtl_transit_s": null,
+      "waypoints_total": 1,
+      "waypoints_reached": 1,
+      "waypoints_completed": 0,
+      "waypoints": [
+        {
+          "id": "wp_safety",
+          "transit_s": 1.88,
+          "hold_s": null,
+          "reached": true,
+          "inspected": false
+        }
+      ],
+      "mean_transit_s": 1.88,
+      "mean_hold_s": null,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 1,
+      "safety_faults": [
+        "mission_heartbeat_loss"
+      ],
+      "safety_action": "rtl",
+      "state_transitions": 4
+    },
+    {
+      "run": "week6_nominal_mission",
+      "evidence": "docs/experiments/week6_nominal_mission.jsonl",
+      "mission": "safety_test",
+      "scenario": "safety_nominal",
+      "outcome": "complete",
+      "success": true,
+      "duration_s": 55.092,
+      "takeoff_s": 10.214,
+      "landing_s": 11.068,
+      "rtl_transit_s": 1.927,
+      "waypoints_total": 1,
+      "waypoints_reached": 1,
+      "waypoints_completed": 1,
+      "waypoints": [
+        {
+          "id": "wp_safety",
+          "transit_s": 1.881,
+          "hold_s": 30.0,
+          "reached": true,
+          "inspected": true
+        }
+      ],
+      "mean_transit_s": 1.881,
+      "mean_hold_s": 30.0,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 0,
+      "safety_faults": [],
+      "safety_action": "",
+      "state_transitions": 7
+    },
+    {
+      "run": "week6_stale_pose_mission",
+      "evidence": "docs/experiments/week6_stale_pose_mission.jsonl",
+      "mission": "safety_test",
+      "scenario": "safety_stale_pose",
+      "outcome": "safety_abort",
+      "success": false,
+      "duration_s": 15.607,
+      "takeoff_s": 10.416,
+      "landing_s": null,
+      "rtl_transit_s": null,
+      "waypoints_total": 1,
+      "waypoints_reached": 1,
+      "waypoints_completed": 0,
+      "waypoints": [
+        {
+          "id": "wp_safety",
+          "transit_s": 1.881,
+          "hold_s": null,
+          "reached": true,
+          "inspected": false
+        }
+      ],
+      "mean_transit_s": 1.881,
+      "mean_hold_s": null,
+      "detections": 0,
+      "detection_rate": 0.0,
+      "mean_confidence": null,
+      "min_range_m": null,
+      "max_range_m": null,
+      "obstacle_detections": 0,
+      "replans": 0,
+      "detour": null,
+      "safety_aborts": 1,
+      "safety_faults": [
+        "stale_pose"
+      ],
+      "safety_action": "land",
+      "state_transitions": 4
+    }
+  ]
+}

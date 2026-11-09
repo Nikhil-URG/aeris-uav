@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 6 complete — safety supervisor, fault injection and RTL/land failsafes verified in SITL. Week 7 evaluation is next.
+**Current status:** Week 7 complete — full stack evaluated, benchmarked, documented and packaged for demo. 36 automated tests pass; four safety faults verified in SITL.
 
 ## Mission
 
@@ -79,6 +79,8 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── perception.md
 │   ├── navigation.md
 │   ├── safety.md
+│   ├── evaluation.md
+│   ├── demo.md
 │   ├── checkpoint.md
 │   └── experiments/
 │       ├── development_log.md
@@ -96,7 +98,9 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── week6_low_battery_mission.jsonl
 │       ├── week6_geofence_breach_mission.jsonl
 │       ├── week6_mission_heartbeat_loss_mission.jsonl
-│       └── week6_*_run.log / week6_*_safety.log
+│       ├── week6_*_run.log / week6_*_safety.log
+│       ├── benchmark.json / benchmark.csv
+│       └── plots/
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
 ├── ros2_ws/
@@ -127,8 +131,9 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── spawn_obstacle.sh
 │   ├── run_safety_fault_test.sh
 │   ├── check_environment.sh
-│   └── evaluate_mission.py
+│   └── evaluate_mission.py      # JSONL metrics, CSV and plots
 ├── tests/
+│   ├── test_evaluate_mission.py
 │   ├── integration/
 │   └── scenarios/
 └── results/
@@ -301,6 +306,33 @@ bash scripts/run_safety_fault_test.sh stale_pose
 
 See [docs/safety.md](docs/safety.md) and the `docs/experiments/week6_*` evidence.
 
+## Evaluation
+
+The evaluator turns mission JSONL logs into benchmark metrics, a CSV and plots:
+
+```bash
+source scripts/aeris_env.sh
+python3 scripts/evaluate_mission.py \
+  --json docs/experiments/benchmark.json \
+  --csv docs/experiments/benchmark.csv \
+  --plot-dir docs/experiments/plots
+python3 -m pytest tests/test_evaluate_mission.py -q
+```
+
+Recorded benchmark results:
+
+- 8 authoritative run logs (nominal, perception, obstacle, safety nominal,
+  four fault scenarios);
+- 4/4 completed missions and 4/4 safe fault outcomes;
+- 100% detection rate at both inspection waypoints, mean confidence 1.00;
+- obstacle detected at 3.75 m, one lateral replan, original waypoint reached;
+- safety actions dispatched 41–98 ms after fault injection;
+- 32 ROS tests + 4 evaluator tests, 0 failures.
+
+Read the full report in [docs/evaluation.md](docs/evaluation.md), the plots in
+`docs/experiments/plots/`, and the reproducible demo runbook in
+[docs/demo.md](docs/demo.md).
+
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
 ## Resuming the project
@@ -327,7 +359,7 @@ The environment script is required because this machine has Miniforge first in `
 | 4 | Perception: camera, OpenCV, target detection and localization | Complete |
 | 5 | Navigation: depth camera, obstacle detection, local replanning | Complete |
 | 6 | Safety: fault injection, failsafes, RTL, automated tests | Complete |
-| 7 | Evaluation: benchmarks, experiment reports, demo | Planned |
+| 7 | Evaluation: benchmarks, experiment reports, demo | Complete |
 
 ## License
 

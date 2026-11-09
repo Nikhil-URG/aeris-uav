@@ -321,6 +321,22 @@ See [safety.md](safety.md).
 
 `scripts/launch_simulation.sh` keeps the simulated battery healthy by default (`PX4_PARAM_SIM_BAT_MIN_PCT=100`, `PX4_PARAM_SIM_BAT_DRAIN=86400`). PX4's own battery failsafe would otherwise interrupt long test campaigns; AERIS battery faults are injected in ROS.
 
+### Evaluation
+
+Regenerate the benchmark metrics and plots from the checked-in mission logs:
+
+```bash
+source scripts/aeris_env.sh
+python3 scripts/evaluate_mission.py \
+  --json docs/experiments/benchmark.json \
+  --csv docs/experiments/benchmark.csv \
+  --plot-dir docs/experiments/plots
+python3 -m pytest tests/test_evaluate_mission.py -q
+```
+
+The full report is [evaluation.md](evaluation.md); the reproducible demo and
+video storyboard are [demo.md](demo.md).
+
 ## 6. QGroundControl (optional but recommended)
 
 ```bash

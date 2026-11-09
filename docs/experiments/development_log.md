@@ -602,6 +602,64 @@ Week 7: evaluation harness, benchmark metrics, plots/report and demo packaging.
 
 ---
 
+## 2026-11-09 — Week 7: evaluation, benchmarks and demo packaging
+
+### Goal
+
+Turn the Week 3–6 flight evidence into reproducible metrics, plots and a final
+report, and package the demo so another engineer can reproduce it.
+
+### Implemented
+
+- `scripts/evaluate_mission.py`:
+  - parses mission JSONL files or run directories;
+  - computes duration, takeoff, transit, hold, RTL and landing times;
+  - counts detections, detection rate, confidence and range;
+  - counts obstacle detections, replans and detour coordinates;
+  - records safety faults/actions and state transitions;
+  - writes JSON, CSV and matplotlib plots.
+- `tests/test_evaluate_mission.py`: 4 evaluator tests.
+- `docs/evaluation.md`: methodology, scenario tables, aggregate metrics,
+  plots, limitations and conclusion.
+- `docs/demo.md`: terminal-by-terminal demo runbook and video storyboard.
+- Checked-in benchmark evidence:
+  - `docs/experiments/benchmark.json`
+  - `docs/experiments/benchmark.csv`
+  - `docs/experiments/plots/mission_durations.png`
+  - `docs/experiments/plots/phase_breakdown.png`
+
+### Results
+
+| Metric | Result |
+|---|---|
+| Recorded runs | 8 |
+| Completed missions | 4 |
+| Planned safety aborts | 4 |
+| Planned-completion success | 4/4 |
+| Safe fault outcomes | 4/4 |
+| Completed duration | mean 40.3 s, range 33.8–55.1 s |
+| Detections | 2, confidence 1.00, rate 100% |
+| Obstacle detections / replans | 1 / 1 |
+| Safety dispatch latency | 41–98 ms |
+| ROS tests | 32/32 |
+| Evaluator tests | 4/4 |
+| Environment check | 18 ok |
+
+### Notes
+
+- The benchmark set uses the authoritative Week 3–6 logs rather than
+  re-flying every scenario. This is documented as a validity limitation.
+- Safety-run durations in the JSONL end at `safety_abort`, not at landing; the
+  safety report uses the offboard/PX4 logs for the post-action outcome.
+- Demo video capture remains an operator step; the storyboard and expected
+  outputs are checked in.
+
+### Next
+
+Project complete. Future work is listed in `docs/checkpoint.md` §8.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

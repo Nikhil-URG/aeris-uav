@@ -1,0 +1,9 @@
+run,scenario,mission,outcome,duration_s,takeoff_s,waypoints_total,waypoints_reached,waypoints_completed,mean_transit_s,mean_hold_s,rtl_transit_s,landing_s,detections,detection_rate,mean_confidence,min_range_m,max_range_m,obstacle_detections,replans,safety_faults,safety_action,evidence
+week3_mission,nominal,inspection_alpha,complete,33.772,10.265,2,2,2,2.054,3.0,2.179,11.215,0,0.0,,,,0,0,,,docs/experiments/week3_mission.jsonl
+week4_mission,perception,inspection_alpha,complete,36.523,11.332,2,2,2,2.434,3.0,2.586,11.727,2,1.0,1.0,6.271,6.28,0,0,,,docs/experiments/week4_mission.jsonl
+week5_mission,obstacle,inspection_alpha,complete,35.889,10.586,2,2,2,2.998,3.0,2.18,11.121,0,0.0,,,,1,1,,,docs/experiments/week5_mission.jsonl
+week6_geofence_breach_mission,safety_geofence_breach,safety_test,safety_abort,14.398,10.313,1,1,0,1.877,,,,0,0.0,,,,0,0,geofence_breach,rtl,docs/experiments/week6_geofence_breach_mission.jsonl
+week6_low_battery_mission,safety_low_battery,safety_test,safety_abort,14.451,10.317,1,1,0,1.929,,,,0,0.0,,,,0,0,low_battery,rtl,docs/experiments/week6_low_battery_mission.jsonl
+week6_mission_heartbeat_loss_mission,safety_mission_heartbeat_loss,safety_test,safety_abort,13.396,10.309,1,1,0,1.88,,,,0,0.0,,,,0,0,mission_heartbeat_loss,rtl,docs/experiments/week6_mission_heartbeat_loss_mission.jsonl
+week6_nominal_mission,safety_nominal,safety_test,complete,55.092,10.214,1,1,1,1.881,30.0,1.927,11.068,0,0.0,,,,0,0,,,docs/experiments/week6_nominal_mission.jsonl
+week6_stale_pose_mission,safety_stale_pose,safety_test,safety_abort,15.607,10.416,1,1,0,1.881,,,,0,0.0,,,,0,0,stale_pose,land,docs/experiments/week6_stale_pose_mission.jsonl

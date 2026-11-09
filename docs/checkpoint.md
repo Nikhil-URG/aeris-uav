@@ -1,7 +1,7 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-09  
-**Phase:** Week 6 complete — Week 7 (evaluation) is next  
+**Phase:** Week 7 complete — project delivered  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
@@ -9,7 +9,8 @@
 **Week 3 tag:** `week-3-checkpoint` (commit `ba262c9`)  
 **Week 4 tag:** `week-4-checkpoint` (commit `8618b01`)  
 **Week 5 tag:** `week-5-checkpoint` (commit `4237774`)  
-**Week 6 tag:** `week-6-checkpoint` (this checkpoint commit)  
+**Week 6 tag:** `week-6-checkpoint` (commit `94e8f02`)  
+**Week 7 tag:** `week-7-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -83,10 +84,16 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Safety actions | Stale pose → land; other faults → RTL; all flights disarmed |
 | Safety tests | 11/11 evaluator tests; workspace total 32/32 |
 | Safety evidence | `docs/experiments/week6_*_mission.jsonl` |
+| Benchmark set | 8 runs: 4 completed, 4 planned safety aborts |
+| Benchmark success | 4/4 planned completions; 4/4 safe fault outcomes |
+| Detection benchmark | 2/2 waypoints, confidence 1.00, rate 100% |
+| Obstacle benchmark | 3.75 m detection, 1 replan, original waypoint reached |
+| Safety latency | 41–98 ms from fault injection to action dispatch |
+| Evaluator tests | 4/4 |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
 | Environment check | `18 ok, 0 warnings, 0 failures` |
 
-Milestone 1–6 acceptance are complete.
+Milestone 1–7 acceptance are complete.
 
 ---
 
@@ -134,6 +141,8 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── perception.md               # Week 4 camera + OpenCV detection
 │   ├── navigation.md               # Week 5 lidar + replanning
 │   ├── safety.md                   # Week 6 supervisor + faults
+│   ├── evaluation.md               # Week 7 benchmarks + report
+│   ├── demo.md                     # reproducible demo runbook
 │   ├── checkpoint.md               # this file
 │   └── experiments/
 │       ├── development_log.md
@@ -151,7 +160,9 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │       ├── week6_low_battery_mission.jsonl
 │       ├── week6_geofence_breach_mission.jsonl
 │       ├── week6_mission_heartbeat_loss_mission.jsonl
-│       └── week6_*_run.log / week6_*_safety.log
+│       ├── week6_*_run.log / week6_*_safety.log
+│       ├── benchmark.json / benchmark.csv
+│       └── plots/
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
 │   ├── px4_msgs/                   # Git submodule, v1.17.0
@@ -176,13 +187,13 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── spawn_obstacle.sh
 │   ├── run_safety_fault_test.sh
 │   ├── check_environment.sh
-│   └── evaluate_mission.py         # Week 7 evaluation entry point
+│   └── evaluate_mission.py         # metrics, CSV and plots
 ├── simulation/
 │   ├── models/red_target/          # Week 4 inspection target
 │   ├── models/tall_obstacle/       # Week 5 obstacle
 │   ├── worlds/
 │   └── scenarios/
-├── tests/                          # integration/scenario tests
+├── tests/                          # evaluator + integration/scenario tests
 └── results/                        # logs/plots/reports (ignored)
 ```
 
@@ -213,11 +224,17 @@ Key Week 2–6 files:
 - `docs/perception.md`
 - `docs/navigation.md`
 - `docs/safety.md`
+- `docs/evaluation.md`
+- `docs/demo.md`
+- `scripts/evaluate_mission.py`
+- `tests/test_evaluate_mission.py`
 - `docs/experiments/week2_offboard_run.log`
 - `docs/experiments/week3_mission.jsonl`
 - `docs/experiments/week4_mission.jsonl`
 - `docs/experiments/week5_mission.jsonl`
 - `docs/experiments/week6_*_mission.jsonl`
+- `docs/experiments/benchmark.json`
+- `docs/experiments/plots/`
 
 ---
 
@@ -406,6 +423,22 @@ Expected: `stale_pose` → land; `low_battery`, `geofence_breach`, `mission_hear
 ```bash
 bash scripts/run_safety_fault_test.sh low_battery
 ```
+
+### 5.11 Evaluation and demo
+
+Regenerate the benchmark report, CSV and plots from the checked-in evidence:
+
+```bash
+source scripts/aeris_env.sh
+python3 scripts/evaluate_mission.py \
+  --json docs/experiments/benchmark.json \
+  --csv docs/experiments/benchmark.csv \
+  --plot-dir docs/experiments/plots
+python3 -m pytest tests/test_evaluate_mission.py -q
+```
+
+The full report is `docs/evaluation.md`; the terminal-by-terminal demo and
+video storyboard are `docs/demo.md`.
 
 ---
 
@@ -612,42 +645,45 @@ When `~/rtl` is commanded, PX4 leaves offboard mode. The controller must enter i
 
 Evidence: `docs/experiments/week6_nominal_mission.jsonl`, `docs/experiments/week6_*_mission.jsonl`, `docs/experiments/week6_*_run.log`, `docs/experiments/week6_*_safety.log`.
 
+### Milestone 7 — evaluation and demo packaging
+
+| Check | Result |
+|---|---|
+| Evaluator | PASS — 8 runs, JSON + CSV + plots |
+| Planned-completion success | PASS — 4/4 |
+| Safe fault outcomes | PASS — 4/4 |
+| Detection benchmark | PASS — 2/2, confidence 1.00 |
+| Obstacle benchmark | PASS — 3.75 m detection, 1 replan |
+| Safety decision latency | PASS — 41–98 ms |
+| ROS package tests | PASS — 32/32 |
+| Evaluator tests | PASS — 4/4 |
+| Environment check | PASS — 18 ok |
+| Report and demo runbook | PASS — `docs/evaluation.md`, `docs/demo.md` |
+
+Evidence: `docs/experiments/benchmark.json`, `docs/experiments/benchmark.csv`, `docs/experiments/plots/`.
+
 ---
 
-## 8. Week 7 plan — evaluation, benchmarks and demo packaging
+## 8. Final state and future work
 
-### Goal
+All seven planned weeks are complete:
 
-Measure the complete stack, produce reproducible benchmark evidence, plots and a final report, and package the demo so another engineer can reproduce it.
+1. PX4/Gazebo/ROS 2 telemetry foundation.
+2. Offboard arm, takeoff, hold and landing.
+3. Mission manager, waypoints, RTL and JSONL logging.
+4. Camera perception and OpenCV target detection.
+5. Lidar obstacle detection and reactive replanning.
+6. Safety supervision, fault injection and land/RTL failsafes.
+7. Evaluation harness, benchmark report, plots and demo runbook.
 
-### Deliverables
+Future work, in priority order:
 
-1. `scripts/evaluate_mission.py`:
-   - parse mission JSONL runs;
-   - compute takeoff time, waypoint transit times, inspection holds, RTL/land time and total duration;
-   - count detections, obstacle detections, replans, safety faults and aborts;
-   - emit JSON and CSV metrics.
-2. Benchmark scenario runs:
-   - nominal two-waypoint mission;
-   - perception mission with two targets;
-   - obstacle mission with detour;
-   - safety fault campaign (four faults).
-3. Plots/report:
-   - `docs/evaluation.md` with methodology, metrics, tables, limitations;
-   - plots under `results/` and checked-in evidence in `docs/experiments/`.
-4. Demo packaging:
-   - one-command or documented launch sequence;
-   - final README quick start and demo checklist.
-5. Regression:
-   - full build, all tests and `check_environment.sh` pass.
-
-### Week 7 acceptance
-
-- Evaluation harness runs against the recorded Week 3–6 evidence.
-- Benchmark metrics are reproducible and checked in.
-- Final report and plots exist.
-- The demo sequence is documented and verified.
-- No regression in the safety, navigation or perception stacks.
+1. Repeat each scenario across many trials and add wind/obstacle randomization.
+2. Validate the architecture on hardware or hardware-in-the-loop.
+3. Calibrate camera extrinsics and replace the approximate ground projection.
+4. Replace the reactive detour with a global/grid planner and 3D avoidance.
+5. Record and publish the demo video using `docs/demo.md`.
+6. Add CI for the build, ROS tests, evaluator tests and environment checks.
 
 ---
 
@@ -669,20 +705,24 @@ Read these files first:
 - docs/perception.md
 - docs/navigation.md
 - docs/safety.md
+- docs/evaluation.md
+- docs/demo.md
 - docs/experiments/development_log.md
 - docs/experiments/week3_mission.jsonl
 - docs/experiments/week4_mission.jsonl
 - docs/experiments/week5_mission.jsonl
 - docs/experiments/week6_*_mission.jsonl
+- docs/experiments/benchmark.json
 
 Current state:
-- Weeks 1–6 are complete.
+- All seven weeks are complete.
 - aeris_flight_control: 20 Hz offboard stream, arm, takeoff to 5 m, HOLD/TRANSIT/RTL/LAND, go_to/hold/land/rtl/abort, FlightStatus at 10 Hz.
 - aeris_mission_manager: YAML validation, sequential waypoints, RTL, landing, obstacle replanning, safety aborts, JSONL logs; 11/11 tests pass.
-- aeris_perception: downward mono camera, OpenCV red-panel detection, 4/4 tests; mission logs target_detected at both inspection waypoints.
+- aeris_perception: downward mono camera, OpenCV red-panel detection, 4/4 tests; 2/2 detections at inspection waypoints, confidence 1.00.
 - aeris_navigation: 270° lidar sector obstacle map and corridor check, 4/4 tests; obstacle mission logged a 3.75 m detection and detour to (1.54, 1.94).
-- aeris_safety: pose/battery/geofence/heartbeat supervision, fault injection, land/RTL actions, 11/11 tests. All four injected faults were verified in SITL.
-- Workspace total: 32 tests, 0 failures; environment check 18 ok.
+- aeris_safety: pose/battery/geofence/heartbeat supervision, fault injection, land/RTL actions, 11/11 tests. All four injected faults were verified in SITL, with 41–98 ms decision latency.
+- Evaluation: scripts/evaluate_mission.py, 8 recorded runs, benchmark JSON/CSV, two plots, 4 evaluator tests.
+- Workspace total: 32 ROS tests + 4 evaluator tests, 0 failures; environment check 18 ok.
 - Perception uses gz_x500_mono_cam_down; navigation uses gz_x500_lidar_2d; ros_gz_bridge is installed.
 - PYTHONNOUSERSITE=1 is required for apt OpenCV/NumPy; aeris_env.sh sets it.
 - launch_simulation.sh keeps the SITL battery healthy with PX4_PARAM_SIM_BAT_MIN_PCT=100 and PX4_PARAM_SIM_BAT_DRAIN=86400.
@@ -690,8 +730,7 @@ Current state:
 - Always run `source scripts/aeris_env.sh` before ROS/PX4 commands; it keeps conda's Python 3.13 out of the ROS shell.
 - Never pipe PX4's interactive console through tee; launch_simulation.sh uses `script` for PTY logging.
 
-Next task: implement Week 7, evaluation and demo packaging.
-Add scripts/evaluate_mission.py, parse the recorded mission JSONL runs, compute mission/detection/obstacle/safety metrics, emit JSON/CSV, generate plots, write docs/evaluation.md, and produce a reproducible demo quick start. Run the full test suite and environment check before checkpointing.
+No further milestone is required. If extending the project, start with the future-work list in docs/checkpoint.md §8: repeated trials, hardware/HITL, calibrated perception, global planning, demo video and CI.
 
 Before changing code, run:
   source scripts/aeris_env.sh
@@ -719,7 +758,8 @@ Current branch: `main`. All checkpoint tags are pushed:
 - `week-3-checkpoint` — Week 3 mission manager (`ba262c9`)
 - `week-4-checkpoint` — Week 4 perception (`8618b01`)
 - `week-5-checkpoint` — Week 5 obstacle avoidance (`4237774`)
-- `week-6-checkpoint` — Week 6 safety supervisor (this checkpoint)
+- `week-6-checkpoint` — Week 6 safety supervisor (`94e8f02`)
+- `week-7-checkpoint` — Week 7 evaluation and demo (this checkpoint)
 
 Push subsequent changes:
 
@@ -730,8 +770,8 @@ git push origin main
 Create a future checkpoint:
 
 ```bash
-git tag -a week-7-checkpoint -m "Week 7 complete: evaluation and demo"
-git push origin week-7-checkpoint
+git tag -a <milestone>-checkpoint -m "<description>"
+git push origin <milestone>-checkpoint
 ```
 
 The repository contains a submodule (`px4_msgs`). A fresh clone should use:
@@ -761,6 +801,7 @@ ros2 pkg executables aeris_mission_manager
 ros2 pkg executables aeris_perception
 ros2 pkg executables aeris_navigation
 ros2 pkg executables aeris_safety
+python3 -m pytest tests/test_evaluate_mission.py -q
 ```
 
 Expected:
@@ -770,5 +811,6 @@ Expected:
 - `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `px4_msgs`
 - executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`, `perception`, `navigation_node`, `safety_node`
 - `ros_gz_bridge` installed
+- `4 passed` for the evaluator tests
 
-Then start the simulation and run the full mission demo as in §5.
+Then start the simulation and run the full mission demo as in §5, or follow `docs/demo.md`.
