@@ -124,6 +124,18 @@ if command -v ros2 >/dev/null 2>&1; then
   else
     warn "mission_manager executable missing; rebuild the workspace"
   fi
+
+  if ros2 pkg executables aeris_perception 2>/dev/null | grep -q 'perception'; then
+    ok "perception executable available"
+  else
+    warn "perception executable missing; rebuild the workspace"
+  fi
+
+  if ros2 pkg list 2>/dev/null | grep -q '^ros_gz_bridge$'; then
+    ok "ros_gz_bridge installed"
+  else
+    warn "ros_gz_bridge missing; camera bridge unavailable"
+  fi
 fi
 
 section "Ground control"

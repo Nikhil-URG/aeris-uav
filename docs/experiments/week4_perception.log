@@ -1,0 +1,9 @@
+[perception-2] [INFO] [1794257703.509595004] [aeris_perception]: Camera info: 1280x960 fx=539.9 fy=539.9 cx=640.0 cy=480.0
+[perception-2] [INFO] [1794257731.648404698] [aeris_perception]: Detected red_target: conf=1.00 bbox=(55,0,138,44) altitude=4.37 m
+[perception-2] [INFO] [1794257733.107866270] [aeris_perception]: Detected red_target: conf=1.00 bbox=(105,0,126,79) altitude=4.69 m
+[perception-2] [INFO] [1794257734.970674813] [aeris_perception]: Detected red_target: conf=1.00 bbox=(367,0,119,78) altitude=4.87 m
+[perception-2] [INFO] [1794257736.867892780] [aeris_perception]: Detected red_target: conf=1.00 bbox=(591,0,117,113) altitude=4.92 m
+[perception-2] [INFO] [1794257741.023133103] [aeris_perception]: Detected red_target: conf=1.00 bbox=(1006,387,137,113) altitude=4.99 m
+[perception-2] [INFO] [1794257743.148136729] [aeris_perception]: Detected red_target: conf=1.00 bbox=(988,383,120,114) altitude=4.99 m
+[perception-2] [INFO] [1794257745.292923235] [aeris_perception]: Detected red_target: conf=1.00 bbox=(691,539,111,113) altitude=5.14 m
+[perception-2] [INFO] [1794257748.636276122] [aeris_perception]: Detected red_target: conf=1.00 bbox=(0,0,130,87) altitude=4.22 m

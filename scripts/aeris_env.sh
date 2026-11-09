@@ -88,4 +88,8 @@ unset _aeris_nounset_was_set
 export AERIS_ROOT
 export RCUTILS_COLORIZED_OUTPUT="${RCUTILS_COLORIZED_OUTPUT:-1}"
 
+# Keep user-site packages out of the ROS environment. In particular, a
+# user-installed NumPy 2.x shadows apt NumPy 1.x and breaks cv2/cv_bridge.
+export PYTHONNOUSERSITE=1
+
 echo "[aeris_env] ROS_DISTRO=${ROS_DISTRO:-unset} | python3=$(command -v python3) | AERIS_ROOT=$AERIS_ROOT"

@@ -51,8 +51,14 @@ else
   fi
 fi
 
+PX4_SIM_MODEL="${PX4_SIM_MODEL:-gz_x500}"
+export PX4_SIM_MODEL
+if [[ -n "${PX4_GZ_WORLD:-}" ]]; then
+  export PX4_GZ_WORLD
+fi
+
 cd "$PX4_DIR"
-echo "[launch] Starting PX4 SITL (headless=${HEADLESS:-0})."
+echo "[launch] Starting PX4 SITL (model=${PX4_SIM_MODEL}, headless=${HEADLESS:-0})."
 echo "[launch] Agent log: $LOG_DIR/microxrce_agent.log"
 echo "[launch] PX4 log:   $LOG_DIR/px4_sitl.log"
 
@@ -69,8 +75,8 @@ if [[ -f "$LOG_DIR/px4_sitl.log" ]]; then
 fi
 
 if command -v script >/dev/null 2>&1; then
-  script -q -e -f -c "make px4_sitl gz_x500" "$LOG_DIR/px4_sitl.log"
+  script -q -e -f -c "make px4_sitl ${PX4_SIM_MODEL}" "$LOG_DIR/px4_sitl.log"
 else
   echo "[launch] WARNING: 'script' not found; PX4 output will not be logged." >&2
-  make px4_sitl gz_x500
+  make px4_sitl "${PX4_SIM_MODEL}"
 fi

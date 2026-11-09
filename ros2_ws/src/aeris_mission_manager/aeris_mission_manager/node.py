@@ -13,7 +13,7 @@ from pathlib import Path
 import threading
 import time
 
-from aeris_interfaces.msg import FlightStatus, MissionStatus
+from aeris_interfaces.msg import DetectionArray, FlightStatus, MissionStatus
 from aeris_interfaces.srv import GoTo
 from aeris_mission_manager.mission import Mission, MissionValidationError, load_mission
 import rclpy
@@ -43,6 +43,9 @@ class MissionManager(Node):
         self.declare_parameter("waypoint_timeout_s", 45.0)
         self.declare_parameter("waypoint_accept_timeout_s", 5.0)
         self.declare_parameter("land_timeout_s", 60.0)
+        self.declare_parameter(
+            "detections_topic", "/aeris/perception/detections"
+        )
 
         self._lock = threading.RLock()
         self._state = "IDLE"
@@ -52,6 +55,8 @@ class MissionManager(Node):
         self._active = False
         self._success = False
         self._flight_status: FlightStatus | None = None
+        self._latest_detection: DetectionArray | None = None
+        self._latest_detection_time = 0.0
         self._mission: Mission | None = None
         self._mission_error = ""
         self._run_dir: Path | None = None
@@ -119,6 +124,12 @@ class MissionManager(Node):
             FlightStatus,
             self._flight_status_topic,
             self._on_flight_status,
+            10,
+        )
+        self._detection_sub = self.create_subscription(
+            DetectionArray,
+            str(self.get_parameter("detections_topic").value),
+            self._on_detections,
             10,
         )
         self._status_pub = self.create_publisher(
@@ -192,6 +203,11 @@ class MissionManager(Node):
     def _on_flight_status(self, msg: FlightStatus) -> None:
         with self._lock:
             self._flight_status = msg
+
+    def _on_detections(self, msg: DetectionArray) -> None:
+        with self._lock:
+            self._latest_detection = msg
+            self._latest_detection_time = time.monotonic()
 
     def _publish_status(self) -> None:
         msg = MissionStatus()
@@ -324,7 +340,41 @@ class MissionManager(Node):
 
             self._set_state("INSPECT", f"inspecting {waypoint.id}")
             self._log("waypoint_reached", index=index, id=waypoint.id)
+            detection_window_start = time.monotonic()
             self._sleep_abortable(waypoint.hold_s, deadline)
+
+            with self._lock:
+                detection = self._latest_detection
+                detection_time = self._latest_detection_time
+
+            if (
+                detection is not None
+                and detection_time >= detection_window_start
+                and len(detection.detections) > 0
+            ):
+                best = detection.detections[0]
+                self._log(
+                    "target_detected",
+                    index=index,
+                    id=waypoint.id,
+                    target_id=waypoint.target_id,
+                    detected_class=best.class_name,
+                    confidence=float(best.confidence),
+                    bearing_rad=float(best.bearing_rad),
+                    range_m=float(best.range_m),
+                    local_x=float(best.local_x),
+                    local_y=float(best.local_y),
+                    local_z=float(best.local_z),
+                )
+                self._message = f"target detected at {waypoint.id}"
+            else:
+                self._log(
+                    "target_not_detected",
+                    index=index,
+                    id=waypoint.id,
+                    target_id=waypoint.target_id,
+                )
+
             self._log(
                 "inspection_complete",
                 index=index,

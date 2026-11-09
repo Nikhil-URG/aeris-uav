@@ -246,6 +246,29 @@ ros2 service call /aeris_mission_manager/abort std_srvs/srv/Trigger
 
 Do not run `offboard.launch.py` and `mission.launch.py` simultaneously; both start an offboard controller with the same node name.
 
+### Camera + perception demo
+
+Start the camera-enabled airframe:
+
+```bash
+PX4_SIM_MODEL=gz_x500_mono_cam_down bash scripts/launch_simulation.sh
+```
+
+Spawn the two red inspection targets:
+
+```bash
+bash scripts/spawn_targets.sh
+```
+
+Start the Gazebo camera bridge and the OpenCV perception node:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup perception.launch.py
+```
+
+Then run the mission as above. The mission manager records `target_detected` events during each inspection hold. See [perception.md](perception.md).
+
 ## 6. QGroundControl (optional but recommended)
 
 ```bash
@@ -394,10 +417,12 @@ The Gazebo camera bridge is not part of the base install. Install it before runn
 
 ```bash
 sudo apt update
-sudo apt install -y ros-jazzy-ros-gz ros-jazzy-vision-msgs
+sudo apt install -y ros-jazzy-ros-gz
 ```
 
-`cv_bridge`, `image_transport` and OpenCV development files are already installed with the ROS 2 desktop/PX4 setup.
+`cv_bridge`, `image_transport`, python3-opencv and OpenCV development files are already installed with the ROS 2 desktop/PX4 setup.
+
+If `import cv2` fails with a NumPy ABI error, a user-site NumPy 2.x is shadowing the apt NumPy 1.x. `scripts/aeris_env.sh` exports `PYTHONNOUSERSITE=1` to prevent this; always source it before running perception.
 
 ### PX4 log grows rapidly
 

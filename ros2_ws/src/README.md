@@ -13,13 +13,14 @@ or, from the repository root:
 bash scripts/build.sh
 ```
 
-## Active packages (Week 3)
+## Active packages (Week 4)
 
 | Package | Language | Purpose |
 |---|---|---|
-| `aeris_interfaces` | ROS 2 msgs/srvs | Flight status, mission status, `GoTo` |
+| `aeris_interfaces` | ROS 2 msgs/srvs | Flight status, mission status, detections, `GoTo` |
 | `aeris_flight_control` | C++ | PX4 telemetry and offboard control |
 | `aeris_mission_manager` | Python | Mission validation, sequencing and JSONL logging |
+| `aeris_perception` | Python | Camera bridge consumer, OpenCV detection and localization |
 | `aeris_bringup` | Python | Launch files and configuration |
 
 `px4_msgs` is an external Git submodule pinned to PX4 `v1.17.0`. It provides the DDS message definitions that match the simulated firmware.
@@ -28,7 +29,6 @@ bash scripts/build.sh
 
 | Package | Language | Target | Purpose |
 |---|---|---|---|
-| `aeris_perception` | Python | Week 4 | Camera, OpenCV, target detection |
 | `aeris_navigation` | C++ | Week 5 | Trajectory and obstacle planning |
 | `aeris_safety` | C++ | Week 6 | Health checks and failsafe supervision |
 

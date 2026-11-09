@@ -6,6 +6,8 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/Detection.msg"
+  "msg/DetectionArray.msg"
   "msg/FlightStatus.msg"
   "msg/MissionStatus.msg"
   "srv/GoTo.srv"

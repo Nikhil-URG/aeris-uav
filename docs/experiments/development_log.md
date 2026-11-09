@@ -371,6 +371,75 @@ Week 4: camera integration, OpenCV target detection and target localization. Thi
 
 ---
 
+## 2026-11-09 — Week 4: camera, OpenCV detection and mission-log integration
+
+### Goal
+
+Integrate the simulated downward camera, detect the inspection target with OpenCV, publish detections, and record them during mission INSPECT phases.
+
+### Implemented
+
+- `aeris_interfaces`: `Detection` and `DetectionArray`.
+- `aeris_perception` Python package:
+  - `detector.py`: HSV red thresholding, contour filtering, bearing, slant range and nadir ground projection;
+  - `node.py`: image/camera-info/position subscriptions and detection publishing;
+  - 4 synthetic-image unit tests.
+- `aeris_bringup`:
+  - `config/gz_camera_bridge.yaml`;
+  - `launch/perception.launch.py`;
+  - `ros_gz_bridge` and `aeris_perception` dependencies.
+- Simulation:
+  - `simulation/models/red_target/model.sdf`;
+  - `scripts/spawn_targets.sh`;
+  - `launch_simulation.sh` supports `PX4_SIM_MODEL` and `PX4_GZ_WORLD`.
+- Mission manager:
+  - subscribes to `/aeris/perception/detections`;
+  - logs `target_detected` / `target_not_detected` during INSPECT.
+
+### Camera and bridge
+
+- Model: `gz_x500_mono_cam_down`.
+- Camera: 1280 × 960, `fx=fy=539.9`, `cx=640`, `cy=480`.
+- ROS image rate: ~12.8 Hz.
+- Bridge topics: `/aeris/camera/image_raw`, `/aeris/camera/camera_info`.
+
+### Mission result — perception-backed `inspection_alpha`
+
+| Metric | Result |
+|---|---|
+| Detector tests | 4/4 passing |
+| Mission | 2/2 waypoints, RTL, land, `COMPLETE` |
+| `target_detected` events | 2/2 inspection waypoints |
+| Confidence | 1.00 at both |
+| Slant range | 6.27 m / 6.28 m |
+| Detection class | `red_target` |
+
+Artifacts:
+
+- `docs/experiments/week4_mission.jsonl`
+- `docs/experiments/week4_perception.log`
+- `docs/experiments/week4_mission_run.log`
+- `docs/perception.md`
+
+### Issues and fixes
+
+1. **NumPy 2 in user site broke apt OpenCV.**
+   - `~/.local` NumPy 2.5.4 shadowed system NumPy 1.26 and `cv2`/`cv_bridge` failed to import.
+   - Fix: `scripts/aeris_env.sh` exports `PYTHONNOUSERSITE=1`, selecting the apt OpenCV 4.6 + NumPy 1.26 stack.
+
+2. **Camera-info callback logged at 30 Hz.**
+   - Fix: log camera intrinsics only on the first valid message.
+
+3. **The downward camera can see the neighbouring target.**
+   - The red panel directly under the vehicle is partly occluded by the airframe; the other panel appears at the edge of the frame.
+   - Detection is robust, but ground localization remains approximate. Documented in `docs/perception.md`.
+
+### Next
+
+Week 5: depth/lidar perception, obstacle detection, local planning and replanning. The Week 4 camera provides the inspection view; Week 5 adds obstacle-aware navigation.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

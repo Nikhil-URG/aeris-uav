@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 3 complete — mission manager, two-waypoint inspection, RTL and landing verified in SITL. Week 4 perception is next.
+**Current status:** Week 4 complete — downward camera, OpenCV target detection and mission-log integration verified in SITL. Week 5 navigation is next.
 
 ## Mission
 
@@ -76,12 +76,16 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── installation.md
 │   ├── flight_control.md
 │   ├── mission_design.md
+│   ├── perception.md
 │   ├── checkpoint.md
 │   └── experiments/
 │       ├── development_log.md
 │       ├── week2_offboard_run.log
 │       ├── week3_mission.jsonl
-│       └── week3_mission_run.log
+│       ├── week3_mission_run.log
+│       ├── week4_mission.jsonl
+│       ├── week4_mission_run.log
+│       └── week4_perception.log
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
 ├── ros2_ws/
@@ -90,6 +94,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── aeris_interfaces/    # AERIS messages and services
 │       ├── aeris_flight_control/
 │       ├── aeris_mission_manager/
+│       ├── aeris_perception/
 │       └── aeris_bringup/
 ├── simulation/
 │   ├── worlds/
@@ -105,6 +110,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── build.sh
 │   ├── launch_simulation.sh
 │   ├── run_qgroundcontrol.sh
+│   ├── spawn_targets.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py
 ├── tests/
@@ -207,6 +213,29 @@ The default mission (`inspection_alpha`) takes off, visits two inspection waypoi
 
 Mission evidence: [docs/experiments/week3_mission.jsonl](docs/experiments/week3_mission.jsonl).
 
+## Perception demo
+
+Use the camera-enabled airframe:
+
+```bash
+PX4_SIM_MODEL=gz_x500_mono_cam_down bash scripts/launch_simulation.sh
+```
+
+Spawn the two red inspection targets:
+
+```bash
+bash scripts/spawn_targets.sh
+```
+
+Start the Gazebo camera bridge and the OpenCV perception node:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup perception.launch.py
+```
+
+The perception stack publishes `/aeris/perception/detections`; the mission manager records `target_detected` events during INSPECT. See [docs/perception.md](docs/perception.md) and [docs/experiments/week4_mission.jsonl](docs/experiments/week4_mission.jsonl).
+
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
 ## Resuming the project
@@ -230,7 +259,7 @@ The environment script is required because this machine has Miniforge first in `
 | 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Complete |
 | 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Complete |
 | 3 | Mission manager: state machine, waypoints, validation, logging | Complete |
-| 4 | Perception: camera, OpenCV, target detection and localization | Planned |
+| 4 | Perception: camera, OpenCV, target detection and localization | Complete |
 | 5 | Navigation: depth camera, obstacle detection, local replanning | Planned |
 | 6 | Safety: fault injection, failsafes, RTL, automated tests | Planned |
 | 7 | Evaluation: benchmarks, experiment reports, demo | Planned |

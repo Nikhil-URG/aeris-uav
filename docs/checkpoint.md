@@ -1,12 +1,13 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-09  
-**Phase:** Week 3 complete — Week 4 (perception) is next  
+**Phase:** Week 4 complete — Week 5 (navigation) is next  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
 **Week 2 tag:** `week-2-checkpoint` (commit `0666e09`)  
-**Week 3 tag:** `week-3-checkpoint` (this checkpoint commit)  
+**Week 3 tag:** `week-3-checkpoint` (commit `ba262c9`)  
+**Week 4 tag:** `week-4-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -67,10 +68,14 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Two-waypoint mission | 2/2 waypoints, RTL, land, `COMPLETE`, ~33.8 s |
 | Mission manager tests | 11/11 passing |
 | Mission evidence | `docs/experiments/week3_mission.jsonl` |
+| Camera | `gz_x500_mono_cam_down`, 1280×960, ~12.8 Hz |
+| Perception | OpenCV red-panel detector, 4/4 tests |
+| Mission detections | 2/2 waypoints, confidence 1.0, range ~6.3 m |
+| Perception evidence | `docs/experiments/week4_mission.jsonl` |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
-| Environment check | `14 ok, 0 warnings, 0 failures` |
+| Environment check | `16 ok, 0 warnings, 0 failures` |
 
-Milestone 1, 2 and 3 acceptance are complete.
+Milestone 1–4 acceptance are complete.
 
 ---
 
@@ -86,6 +91,7 @@ Milestone 1, 2 and 3 acceptance are complete.
 | Simulation logs | `results/logs/` (ignored by Git) |
 | Week 2 flight evidence | `docs/experiments/week2_offboard_run.log` |
 | Week 3 mission evidence | `docs/experiments/week3_mission.jsonl` |
+| Week 4 perception evidence | `docs/experiments/week4_mission.jsonl` |
 | Development journal | `docs/experiments/development_log.md` |
 
 The machine is Pop!_OS 24.04 (Ubuntu 24.04 `noble` base) with an Intel i5-13420H, 15 GiB RAM, and an RTX 4050 Laptop GPU.
@@ -113,18 +119,23 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── installation.md             # setup + troubleshooting
 │   ├── flight_control.md           # telemetry + offboard contract/results
 │   ├── mission_design.md           # Week 3 state machine and mission schema
+│   ├── perception.md               # Week 4 camera + OpenCV detection
 │   ├── checkpoint.md               # this file
 │   └── experiments/
 │       ├── development_log.md
-│       ├── week2_offboard_run.log  # clean Week 2 flight log
-│       ├── week3_mission.jsonl     # structured Week 3 mission events
-│       └── week3_mission_run.log   # filtered Week 3 console evidence
+│       ├── week2_offboard_run.log
+│       ├── week3_mission.jsonl
+│       ├── week3_mission_run.log
+│       ├── week4_mission.jsonl
+│       ├── week4_mission_run.log
+│       └── week4_perception.log
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
 │   ├── px4_msgs/                   # Git submodule, v1.17.0
 │   ├── aeris_interfaces/           # AERIS msgs/srvs
 │   ├── aeris_flight_control/       # C++ telemetry + offboard controller
 │   ├── aeris_mission_manager/      # Python mission manager
+│   ├── aeris_perception/           # OpenCV target detection
 │   └── aeris_bringup/              # launch + YAML + missions
 ├── scripts/
 │   ├── setup.sh
@@ -136,26 +147,36 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── build.sh
 │   ├── launch_simulation.sh
 │   ├── run_qgroundcontrol.sh
+│   ├── spawn_targets.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py         # Week 7 placeholder
-├── simulation/                     # worlds/models/scenarios
+├── simulation/
+│   ├── models/red_target/          # Week 4 inspection target
+│   ├── worlds/
+│   └── scenarios/
 ├── tests/                          # integration/scenario tests
 └── results/                        # logs/plots/reports (ignored)
 ```
 
-Key Week 2–3 files:
+Key Week 2–4 files:
 
 - `ros2_ws/src/aeris_flight_control/src/offboard_controller.cpp`
 - `ros2_ws/src/aeris_mission_manager/aeris_mission_manager/mission.py`
 - `ros2_ws/src/aeris_mission_manager/aeris_mission_manager/node.py`
+- `ros2_ws/src/aeris_perception/aeris_perception/detector.py`
+- `ros2_ws/src/aeris_perception/aeris_perception/node.py`
 - `ros2_ws/src/aeris_bringup/config/offboard.yaml`
 - `ros2_ws/src/aeris_bringup/config/offboard_mission.yaml`
+- `ros2_ws/src/aeris_bringup/config/gz_camera_bridge.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/inspection_alpha.yaml`
 - `ros2_ws/src/aeris_bringup/launch/offboard.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/mission.launch.py`
+- `ros2_ws/src/aeris_bringup/launch/perception.launch.py`
 - `docs/flight_control.md`
+- `docs/perception.md`
 - `docs/experiments/week2_offboard_run.log`
 - `docs/experiments/week3_mission.jsonl`
+- `docs/experiments/week4_mission.jsonl`
 
 ---
 
@@ -286,6 +307,29 @@ ros2 topic hz /fmu/out/vehicle_local_position_v1
 
 Expected: ~50 Hz, `xy_valid: true`, `z_valid: true`, `v_xy_valid: true`, `v_z_valid: true`.
 
+### 5.8 Perception demo
+
+Camera-enabled simulation:
+
+```bash
+PX4_SIM_MODEL=gz_x500_mono_cam_down bash scripts/launch_simulation.sh
+```
+
+Spawn the two red targets:
+
+```bash
+bash scripts/spawn_targets.sh
+```
+
+Start the camera bridge and perception:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup perception.launch.py
+```
+
+Then run the full mission as in §5.6. The JSONL log should contain `target_detected` events during each `INSPECT` phase.
+
 ---
 
 ## 6. Hard-won gotchas
@@ -363,6 +407,24 @@ The offboard controller latches `goal_reached` until a new goal arrives. A missi
 
 `offboard.yaml` is the standalone demo config (`auto_land_after_hold: true`). `offboard_mission.yaml` sets it to `false`; the mission manager owns the landing decision. Do not use the wrong config for a waypoint mission.
 
+### 6.14 User-site NumPy breaks apt OpenCV
+
+A NumPy 2.x in `~/.local/lib/python3.12/site-packages` shadows the apt NumPy 1.26 and breaks `cv2`/`cv_bridge` with an ABI error. `scripts/aeris_env.sh` exports `PYTHONNOUSERSITE=1`; always source it before perception.
+
+### 6.15 Camera bridge topics are model-instance specific
+
+The bridge config points at:
+
+```text
+/world/default/model/x500_mono_cam_down_0/link/camera_link/sensor/imager/image
+```
+
+If the PX4 instance changes, update `gz_camera_bridge.yaml`. Verify with `gz topic -l | grep imager`.
+
+### 6.16 Localization is approximate
+
+The Week 4 ground projection assumes a nadir camera and square pixels. The downward camera can see the neighbouring target at the frame edge, and the projection is not a calibrated extrinsic solution. Detection is robust; precise localization is a later refinement.
+
 ---
 
 ## 7. Acceptance records
@@ -405,61 +467,53 @@ The offboard controller latches `goal_reached` until a new goal arrives. A missi
 | Structured JSONL log | PASS |
 | Final state | `COMPLETE`, success |
 
-Evidence and timings are in `docs/experiments/development_log.md`, `docs/experiments/week2_offboard_run.log` and `docs/experiments/week3_mission.jsonl`.
+### Milestone 4 — perception
+
+| Check | Result |
+|---|---|
+| Camera enabled | PASS — `gz_x500_mono_cam_down` |
+| Camera bridge | PASS — 1280×960, ~12.8 Hz |
+| Detector unit tests | PASS — 4/4 |
+| Target detected at waypoints | PASS — 2/2 |
+| Confidence | PASS — 1.00 |
+| Detection in mission JSONL | PASS |
+| Localization accuracy | APPROXIMATE — documented limitation |
+
+Evidence: `docs/experiments/week4_mission.jsonl`, `docs/experiments/week4_perception.log`.
 
 ---
 
-## 8. Week 4 plan — perception and target localization
+## 8. Week 5 plan — obstacle detection and local replanning
 
 ### Goal
 
-Integrate the simulated camera, detect an inspection target with OpenCV, estimate bearing/range, and feed detections into the mission log during INSPECT.
+Add obstacle perception and a reactive local planner so the mission can detect a blocked path and replan around it.
 
-### Prerequisite
+### Approach
 
-`ros-jazzy-ros-gz` is **not installed yet** and is required for the Gazebo image bridge. Install it before the SITL camera test:
+- Use `gz_x500_lidar_2d` and bridge the Gazebo `LaserScan` to `/aeris/lidar/scan`.
+- Add `aeris_navigation` (C++) with:
+  - a LaserScan subscriber and forward-cone minimum range;
+  - an `ObstacleArray` publisher with bearing/range/blocked status;
+  - a simple vector-field / lateral-detour planner.
+- Mission manager integration:
+  - before transiting to a waypoint, check the navigation status;
+  - if the straight line is blocked, send a lateral detour goal, then continue to the original waypoint;
+  - log `obstacle_detected` and `replan` events in the mission JSONL.
+- Simulation:
+  - add a tall obstacle model and spawn it on the wp_01 → wp_02 path;
+  - verify the lidar sees it and the mission detours safely.
+- Tests:
+  - unit tests for the obstacle cone and detour logic;
+  - SITL obstacle mission with JSONL evidence.
 
-```bash
-sudo apt update
-sudo apt install -y ros-jazzy-ros-gz ros-jazzy-vision-msgs
-```
+### Week 5 acceptance
 
-`cv_bridge`, `image_transport`, `message_filters` and OpenCV development files are already installed.
-
-### Deliverables
-
-1. `aeris_interfaces`:
-   - `Detection.msg` and `DetectionArray.msg`
-   - target id/class, confidence, pixel bbox, bearing, range, vehicle-relative position.
-2. `aeris_perception` Python package:
-   - camera image subscriber using `cv_bridge`;
-   - OpenCV color/contour detection (no YOLO);
-   - optional depth-image range estimation;
-   - detection publisher and optional CSV/JSONL output.
-3. Simulation:
-   - target model and spawn procedure (red target panel);
-   - run PX4 with `gz_x500_mono_cam` or `gz_x500_depth`;
-   - bridge Gazebo camera topics into ROS 2 with `ros_gz_bridge`.
-4. Mission manager integration:
-   - subscribe to detections during INSPECT and log `target_detected`.
-5. Tests:
-   - synthetic-image unit tests for the detector;
-   - at least one SITL detection at a waypoint.
-
-### Suggested detection approach
-
-- Red/orange panel target with HSV thresholding and contour centroid.
-- Bearing from camera intrinsics and pixel offset.
-- Range from a depth image at the target centroid, or from known target size in monocular mode.
-- Transform camera-frame estimate into local NED using the vehicle pose/yaw.
-- If `cv2.aruco` is available, support ArUco as an alternative detector.
-
-### Week 4 acceptance
-
-- Camera stream visible through `ros_gz_bridge`.
-- Target detected at 3–6 m with a confidence score.
-- Detection published and recorded in the mission JSONL.
-- Synthetic-image detector tests pass.
+- Lidar stream visible in ROS 2.
+- Obstacle detected before collision.
+- Mission logs `obstacle_detected` and `replan`.
+- Detour reaches the original waypoint without entering the obstacle radius.
+- No regression in the perception-backed mission.
 
 ---
 
@@ -478,23 +532,26 @@ Read these files first:
 - docs/installation.md
 - docs/flight_control.md
 - docs/mission_design.md
+- docs/perception.md
 - docs/experiments/development_log.md
 - docs/experiments/week2_offboard_run.log
 - docs/experiments/week3_mission.jsonl
+- docs/experiments/week4_mission.jsonl
 
 Current state:
-- Weeks 1–3 are complete.
+- Weeks 1–4 are complete.
 - aeris_flight_control: 20 Hz offboard stream, arm, takeoff to 5 m, HOLD/TRANSIT, go_to, land, abort, FlightStatus at 10 Hz.
-- The offboard controller publishes a 2 Hz idle heartbeat, restores AUTO_LOITER after landing, and uses a 1 s telemetry freshness guard.
 - aeris_mission_manager: YAML validation, sequential waypoints, RTL, landing, JSONL logs; 11/11 tests pass.
-- Verified mission: inspection_alpha, 2/2 waypoints, 3 s inspection holds, RTL, land, COMPLETE in ~33.8 s.
-- Flight evidence: docs/experiments/week3_mission.jsonl.
+- aeris_perception: downward mono camera, OpenCV red-panel detection, detection messages, 4/4 tests; mission logs target_detected at both inspection waypoints.
+- Verified mission: inspection_alpha, 2/2 waypoints, detections, RTL, land, COMPLETE in ~33.8 s.
+- Perception: gz_x500_mono_cam_down, 1280x960, ~12.8 Hz; ros_gz_bridge; PYTHONNOUSERSITE=1 required for apt OpenCV/NumPy.
+- Flight evidence: docs/experiments/week3_mission.jsonl and week4_mission.jsonl.
 - PX4 v1.17 uses _v1 topic suffixes for vehicle_local_position and vehicle_status.
 - Always run `source scripts/aeris_env.sh` before ROS/PX4 commands; it keeps conda's Python 3.13 out of the ROS shell.
 - Never pipe PX4's interactive console through tee; launch_simulation.sh uses `script` for PTY logging.
 
-Next task: implement Week 4, perception and target localization.
-Install ros-jazzy-ros-gz and ros-jazzy-vision-msgs if not already present. Add Detection/DetectionArray interfaces, an aeris_perception OpenCV detector, a Gazebo camera bridge, a red target model, and mission-manager INSPECT integration. Add synthetic-image detector tests and one SITL detection run.
+Next task: implement Week 5, obstacle detection and local replanning.
+Use gz_x500_lidar_2d, bridge LaserScan to /aeris/lidar/scan, add aeris_navigation with a forward-cone obstacle check and lateral detour, integrate with the mission manager (obstacle_detected/replan JSONL), add a tall obstacle model and an obstacle mission, and test it in SITL.
 
 Before changing code, run:
   source scripts/aeris_env.sh
@@ -519,7 +576,8 @@ Current branch: `main`. All checkpoint tags are pushed:
 
 - `week-1-checkpoint` — Week 1 telemetry foundation (`0486c1e`)
 - `week-2-checkpoint` — Week 2 offboard flight (`0666e09`)
-- `week-3-checkpoint` — Week 3 mission manager (this checkpoint)
+- `week-3-checkpoint` — Week 3 mission manager (`ba262c9`)
+- `week-4-checkpoint` — Week 4 perception (this checkpoint)
 
 Push subsequent changes:
 
@@ -530,8 +588,8 @@ git push origin main
 Create a future checkpoint:
 
 ```bash
-git tag -a week-4-checkpoint -m "Week 4 complete: perception verified"
-git push origin week-4-checkpoint
+git tag -a week-5-checkpoint -m "Week 5 complete: obstacle avoidance verified"
+git push origin week-5-checkpoint
 ```
 
 The repository contains a submodule (`px4_msgs`). A fresh clone should use:
@@ -558,13 +616,15 @@ git status
 ros2 pkg list | grep -E '^(aeris_|px4_msgs)'
 ros2 pkg executables aeris_flight_control
 ros2 pkg executables aeris_mission_manager
+ros2 pkg executables aeris_perception
 ```
 
 Expected:
 
-- `14 ok, 0 warnings, 0 failures`
+- `16 ok, 0 warnings, 0 failures`
 - clean working tree
-- `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `px4_msgs`
-- executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`
+- `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `px4_msgs`
+- executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`, `perception`
+- `ros_gz_bridge` installed
 
 Then start the simulation and run the full mission demo as in §5.
