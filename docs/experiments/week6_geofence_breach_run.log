@@ -1,0 +1,51 @@
+[offboard_controller-2] [INFO] [1794261138.465688503] [aeris_offboard_controller]: AERIS offboard controller initialized: auto_start=false, takeoff=5.0 m, setpoint_rate=20.0 Hz, prestream=2.0 s, hold=10.0 s, auto_land_after_hold=false.
+[offboard_controller-2] [INFO] [1794261138.465831643] [aeris_offboard_controller]: Services: aeris_offboard_controller/start, aeris_offboard_controller/go_to, aeris_offboard_controller/hold, aeris_offboard_controller/land, aeris_offboard_controller/rtl, aeris_offboard_controller/abort
+[offboard_controller-2] [INFO] [1794261138.565927707] [aeris_offboard_controller]: Waiting for takeoff readiness: waiting for /fmu/out/vehicle_local_position_v1
+[mission_manager-3] [INFO] [1794261138.882750155] [aeris_mission_manager]: Loaded mission 'safety_test' with 1 waypoints from /home/lucifer/Documents/Project_Aeris/ros2_ws/install/aeris_bringup/share/aeris_bringup/config/missions/safety_test.yaml
+[offboard_controller-2] [INFO] [1794261140.066195727] [aeris_offboard_controller]: Ready for takeoff. Waiting for the start service.
+[mission_manager-3] [INFO] [1794261142.182952118] [aeris_mission_manager]: Mission log: results/logs/safety_test_20261109_225222/mission.jsonl
+[mission_manager-3] [INFO] [1794261142.185543236] [aeris_mission_manager]: [PREFLIGHT] starting offboard controller
+[mission_manager-3] [INFO] [1794261142.207252340] [aeris_mission_manager]: [TAKEOFF] waiting for takeoff and HOLD
+[offboard_controller-2] [INFO] [1794261142.266302622] [aeris_offboard_controller]: Starting mission at NED (0.03, -0.02, -0.02), yaw=1.67 rad; target altitude=5.0 m.
+[offboard_controller-2] [INFO] [1794261142.266445580] [aeris_offboard_controller]: State WAIT_FOR_READY -> PRESTREAM: start accepted
+[offboard_controller-2] [INFO] [1794261144.366294999] [aeris_offboard_controller]: State PRESTREAM -> REQUEST_OFFBOARD: offboard prestream complete
+[offboard_controller-2] [INFO] [1794261144.366672565] [aeris_offboard_controller]: Requesting OFFBOARD mode.
+[offboard_controller-2] [INFO] [1794261144.376147516] [aeris_offboard_controller]: Command ack: DO_SET_MODE accepted (result=0).
+[offboard_controller-2] [INFO] [1794261144.465931568] [aeris_offboard_controller]: State REQUEST_OFFBOARD -> ARM: offboard mode confirmed
+[offboard_controller-2] [INFO] [1794261144.466008660] [aeris_offboard_controller]: Requesting arming.
+[offboard_controller-2] [INFO] [1794261144.472138308] [aeris_offboard_controller]: Command ack: ARM_DISARM accepted (result=0).
+[offboard_controller-2] [INFO] [1794261144.666206788] [aeris_offboard_controller]: State ARM -> TAKEOFF: vehicle armed
+[offboard_controller-2] [INFO] [1794261144.766171754] [aeris_offboard_controller]: TAKEOFF: z=-0.01 target_z=-0.11 vz=-0.00 altitude_error=4.99
+[offboard_controller-2] [INFO] [1794261145.865937445] [aeris_offboard_controller]: TAKEOFF: z=-0.01 target_z=-1.21 vz=-0.00 altitude_error=4.99
+[offboard_controller-2] [INFO] [1794261146.865973765] [aeris_offboard_controller]: TAKEOFF: z=-0.01 target_z=-2.21 vz=-0.00 altitude_error=4.99
+[offboard_controller-2] [INFO] [1794261147.965903996] [aeris_offboard_controller]: TAKEOFF: z=-0.17 target_z=-3.31 vz=-0.79 altitude_error=4.83
+[offboard_controller-2] [INFO] [1794261148.966453107] [aeris_offboard_controller]: TAKEOFF: z=-2.02 target_z=-4.31 vz=-1.93 altitude_error=2.98
+[offboard_controller-2] [INFO] [1794261150.065980535] [aeris_offboard_controller]: TAKEOFF: z=-3.68 target_z=-5.00 vz=-1.21 altitude_error=1.32
+[offboard_controller-2] [INFO] [1794261151.066095274] [aeris_offboard_controller]: TAKEOFF: z=-4.37 target_z=-5.00 vz=-0.46 altitude_error=0.63
+[offboard_controller-2] [INFO] [1794261152.166066403] [aeris_offboard_controller]: TAKEOFF: z=-4.67 target_z=-5.00 vz=-0.20 altitude_error=0.33
+[offboard_controller-2] [INFO] [1794261152.366188704] [aeris_offboard_controller]: State TAKEOFF -> HOLD: takeoff altitude reached
+[offboard_controller-2] [INFO] [1794261152.465854002] [aeris_offboard_controller]: HOLD: position=(0.02, -0.02, -4.72) target=(0.03, -0.02, -5.00) error=0.28 m
+[mission_manager-3] [INFO] [1794261152.497015269] [aeris_mission_manager]: [TRANSIT] transiting to wp_safety (inspect)
+[offboard_controller-2] [INFO] [1794261152.497558427] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794261152.565901430] [aeris_offboard_controller]: TRANSIT: position=(0.02, -0.02, -4.74) target=(3.00, 0.00, -5.00) error=3.00 m
+[offboard_controller-2] [INFO] [1794261153.566019213] [aeris_offboard_controller]: TRANSIT: position=(1.29, -0.11, -4.86) target=(3.00, 0.00, -5.00) error=1.72 m
+[offboard_controller-2] [INFO] [1794261154.266077784] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794261154.365959387] [aeris_offboard_controller]: HOLD: position=(2.71, -0.11, -4.91) target=(3.00, 0.00, -5.00) error=0.32 m
+[mission_manager-3] [INFO] [1794261154.373585686] [aeris_mission_manager]: [INSPECT] inspecting wp_safety
+[offboard_controller-2] [INFO] [1794261155.366240127] [aeris_offboard_controller]: HOLD: position=(3.11, 0.01, -4.93) target=(3.00, 0.00, -5.00) error=0.13 m
+[offboard_controller-2] [INFO] [1794261156.465991868] [aeris_offboard_controller]: HOLD: position=(3.03, 0.09, -4.94) target=(3.00, 0.00, -5.00) error=0.11 m
+[offboard_controller-2] [INFO] [1794261156.566085514] [aeris_offboard_controller]: State HOLD -> RTL: return-to-launch requested
+[offboard_controller-2] [INFO] [1794261156.566207128] [aeris_offboard_controller]: Requesting return to launch.
+[offboard_controller-2] [INFO] [1794261156.580154749] [aeris_offboard_controller]: Command ack: RETURN_TO_LAUNCH accepted (result=0).
+[mission_manager-3] [ERROR] [1794261156.581202572] [aeris_mission_manager]: Safety abort: safety fault (geofence_breach); action=rtl
+[offboard_controller-2] [INFO] [1794261156.665959176] [aeris_offboard_controller]: RTL mode active; offboard stream stopped.
+[offboard_controller-2] [INFO] [1794261156.666020604] [aeris_offboard_controller]: RTL: position=(3.03, 0.09, -4.95), waiting for landing and disarm.
+[offboard_controller-2] [INFO] [1794261158.766310213] [aeris_offboard_controller]: RTL: position=(0.94, 0.05, -4.77), waiting for landing and disarm.
+[offboard_controller-2] [INFO] [1794261160.865916475] [aeris_offboard_controller]: RTL: position=(0.28, -0.01, -3.35), waiting for landing and disarm.
+[offboard_controller-2] [INFO] [1794261162.866002481] [aeris_offboard_controller]: RTL: position=(0.01, -0.02, -1.97), waiting for landing and disarm.
+[offboard_controller-2] [INFO] [1794261164.965963109] [aeris_offboard_controller]: RTL: position=(-0.02, -0.02, -0.52), waiting for landing and disarm.
+[offboard_controller-2] [INFO] [1794261166.966324269] [aeris_offboard_controller]: RTL: position=(-0.06, -0.04, 0.01), waiting for landing and disarm.
+[offboard_controller-2] [INFO] [1794261168.966032055] [aeris_offboard_controller]: Restoring AUTO_LOITER mode after landing.
+[offboard_controller-2] [INFO] [1794261168.966091522] [aeris_offboard_controller]: State RTL -> DONE: returned to launch and disarmed
+[offboard_controller-2] [INFO] [1794261168.966099597] [aeris_offboard_controller]: Mission summary: state=DONE position=(-0.07, -0.03, -0.02) target=(3.00, 0.00, -5.00).
+[offboard_controller-2] [INFO] [1794261168.975745995] [aeris_offboard_controller]: Command ack: DO_SET_MODE accepted (result=0).

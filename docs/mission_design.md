@@ -124,11 +124,12 @@ The evaluation script (`scripts/evaluate_mission.py`) will consume these artifac
 | Waypoint unreachable | navigation planner | Replan once, then abort |
 | Obstacle too close | depth/range check | Stop, replan, or RTL |
 | Mission timeout | wall-clock/ROS time | RTL |
-| Battery low | `vehicle_status`/battery topic | RTL or land |
+| Battery low | `vehicle_status`/battery topic | RTL (ROS safety supervisor) |
 | GCS loss | heartbeat age | Continue mission or RTL per policy |
 | Operator abort | service/command | Land at current position or RTL |
+| Supervisor fault | `SafetyStatus.safe == false` while armed | Stop sequencing; supervisor commands land or RTL |
 
-The exact policy for each failure will be implemented and tested in Week 6.
+Week 6 implements the safety supervisor policies. The mission manager records `safety_abort` and deliberately does not call its own abort service, so an RTL decision is not overridden by a landing command. See [safety.md](safety.md).
 
 ## 7. Week 3 deliverable
 

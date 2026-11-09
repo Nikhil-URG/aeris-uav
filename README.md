@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 5 complete — 2D lidar obstacle detection, corridor checking and reactive detour verified in SITL. Week 6 safety is next.
+**Current status:** Week 6 complete — safety supervisor, fault injection and RTL/land failsafes verified in SITL. Week 7 evaluation is next.
 
 ## Mission
 
@@ -78,6 +78,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── mission_design.md
 │   ├── perception.md
 │   ├── navigation.md
+│   ├── safety.md
 │   ├── checkpoint.md
 │   └── experiments/
 │       ├── development_log.md
@@ -89,7 +90,13 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── week4_perception.log
 │       ├── week5_mission.jsonl
 │       ├── week5_mission_run.log
-│       └── week5_navigation.log
+│       ├── week5_navigation.log
+│       ├── week6_nominal_mission.jsonl
+│       ├── week6_stale_pose_mission.jsonl
+│       ├── week6_low_battery_mission.jsonl
+│       ├── week6_geofence_breach_mission.jsonl
+│       ├── week6_mission_heartbeat_loss_mission.jsonl
+│       └── week6_*_run.log / week6_*_safety.log
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
 ├── ros2_ws/
@@ -100,6 +107,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── aeris_mission_manager/
 │       ├── aeris_perception/
 │       ├── aeris_navigation/
+│       ├── aeris_safety/
 │       └── aeris_bringup/
 ├── simulation/
 │   ├── worlds/
@@ -117,6 +125,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── run_qgroundcontrol.sh
 │   ├── spawn_targets.sh
 │   ├── spawn_obstacle.sh
+│   ├── run_safety_fault_test.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py
 ├── tests/
@@ -265,6 +274,33 @@ ros2 launch aeris_bringup navigation.launch.py
 
 Run the mission as above. The mission manager logs `obstacle_detected` and `replan`, flies a lateral detour, then continues to the original waypoint. See [docs/navigation.md](docs/navigation.md) and [docs/experiments/week5_mission.jsonl](docs/experiments/week5_mission.jsonl).
 
+## Safety and fault injection
+
+Start the mission stack and the safety supervisor:
+
+```bash
+source scripts/aeris_env.sh
+MISSION_FILE=$(ros2 pkg prefix aeris_bringup)/share/aeris_bringup/config/missions/safety_test.yaml
+ros2 launch aeris_bringup mission.launch.py mission_file:="$MISSION_FILE"
+ros2 launch aeris_bringup safety.launch.py
+```
+
+Start the mission, then inject a fault during the inspection hold:
+
+```bash
+ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
+ros2 service call /aeris_safety/inject_fault aeris_interfaces/srv/InjectFault \
+  "{fault: low_battery, enable: true}"
+```
+
+The supervisor publishes `/aeris/safety/status` and commands `land` for stale pose or `rtl` for low battery, geofence breach and mission-heartbeat loss. The mission manager records `safety_abort` and stops sequencing. A one-command scenario runner is available:
+
+```bash
+bash scripts/run_safety_fault_test.sh stale_pose
+```
+
+See [docs/safety.md](docs/safety.md) and the `docs/experiments/week6_*` evidence.
+
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
 ## Resuming the project
@@ -290,7 +326,7 @@ The environment script is required because this machine has Miniforge first in `
 | 3 | Mission manager: state machine, waypoints, validation, logging | Complete |
 | 4 | Perception: camera, OpenCV, target detection and localization | Complete |
 | 5 | Navigation: depth camera, obstacle detection, local replanning | Complete |
-| 6 | Safety: fault injection, failsafes, RTL, automated tests | Planned |
+| 6 | Safety: fault injection, failsafes, RTL, automated tests | Complete |
 | 7 | Evaluation: benchmarks, experiment reports, demo | Planned |
 
 ## License

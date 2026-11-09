@@ -97,7 +97,9 @@ Configuration lives in `ros2_ws/src/aeris_bringup/config/offboard.yaml`.
 |---|---|---|
 | `~/start` | `std_srvs/srv/Trigger` | Start after readiness checks pass |
 | `~/go_to` | `aeris_interfaces/srv/GoTo` | Fly to an NED target and hold |
+| `~/hold` | `std_srvs/srv/Trigger` | Cancel the current goal and hold position |
 | `~/land` | `std_srvs/srv/Trigger` | Land at the current position |
+| `~/rtl` | `std_srvs/srv/Trigger` | Switch PX4 to AUTO_RTL |
 | `~/abort` | `std_srvs/srv/Trigger` | Abort and land at the current position |
 
 ### State machine
@@ -111,6 +113,7 @@ WAIT_FOR_READY
   -> HOLD                 (wait for a goal, land, or standalone auto-land)
   -> TRANSIT              (go_to target; new goals update in flight)
   -> HOLD                 (goal reached, or goal timeout)
+  -> RTL                  (AUTO_RTL; stop offboard stream when PX4 leaves offboard)
   -> LAND                 (NAV_LAND at current position)
   -> DONE                 (disarmed; restore AUTO_LOITER)
 
@@ -141,6 +144,16 @@ The mission manager never publishes PX4 topics. It calls the offboard controller
 - `offboard_mission.yaml` is the mission-mode config.
 
 The Python mission manager loads and validates a YAML mission, calls `start`, sequences `go_to` for each waypoint, waits for each exact goal sequence, holds for the inspection time, performs RTL, calls `land`, and writes a JSONL event log.
+
+### Safety interface (Week 6)
+
+`aeris_safety` monitors PX4 telemetry and the mission heartbeat and commands the controller through the same services:
+
+- stale pose → `~/land`
+- low battery, geofence breach, mission-heartbeat loss → `~/rtl`
+- optional hold action → `~/hold`
+
+The controller treats `~/rtl` as an explicit `RTL` state: it requests `VEHICLE_CMD_NAV_RETURN_TO_LAUNCH`, stops the offboard stream after PX4 leaves offboard mode, waits for landing/disarm, then restores `AUTO_LOITER`. PX4's own failsafe does not trigger the local abort path while `RTL` is active, so a commanded return is not overridden by a landing command. See [safety.md](safety.md).
 
 ### Safety checks
 

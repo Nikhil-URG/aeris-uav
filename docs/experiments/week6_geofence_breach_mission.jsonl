@@ -1,0 +1,10 @@
+{"timestamp": "2026-11-09T21:52:22.183224+00:00", "event": "mission_loaded", "mission": "safety_test", "name": "safety_test", "waypoints": 1, "mission_timeout_s": 180.0}
+{"timestamp": "2026-11-09T21:52:22.183597+00:00", "event": "mission_start", "mission": "safety_test", "mission_file": "/home/lucifer/Documents/Project_Aeris/ros2_ws/install/aeris_bringup/share/aeris_bringup/config/missions/safety_test.yaml"}
+{"timestamp": "2026-11-09T21:52:22.185668+00:00", "event": "state_transition", "mission": "safety_test", "state": "PREFLIGHT", "message": "starting offboard controller"}
+{"timestamp": "2026-11-09T21:52:22.207384+00:00", "event": "state_transition", "mission": "safety_test", "state": "TAKEOFF", "message": "waiting for takeoff and HOLD"}
+{"timestamp": "2026-11-09T21:52:32.496352+00:00", "event": "takeoff_confirmed", "mission": "safety_test"}
+{"timestamp": "2026-11-09T21:52:32.497084+00:00", "event": "state_transition", "mission": "safety_test", "state": "TRANSIT", "message": "transiting to wp_safety (inspect)"}
+{"timestamp": "2026-11-09T21:52:32.497125+00:00", "event": "waypoint_transit", "mission": "safety_test", "index": 0, "id": "wp_safety", "x": 3.0, "y": 0.0, "z": -5.0, "hold_s": 30.0, "action": "inspect", "target_id": "safety_target"}
+{"timestamp": "2026-11-09T21:52:34.373642+00:00", "event": "state_transition", "mission": "safety_test", "state": "INSPECT", "message": "inspecting wp_safety"}
+{"timestamp": "2026-11-09T21:52:34.373689+00:00", "event": "waypoint_reached", "mission": "safety_test", "index": 0, "id": "wp_safety"}
+{"timestamp": "2026-11-09T21:52:36.581617+00:00", "event": "safety_abort", "mission": "safety_test", "faults": ["geofence_breach"], "action": "rtl", "reason": "safety fault (geofence_breach); action=rtl"}

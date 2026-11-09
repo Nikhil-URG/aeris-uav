@@ -1,0 +1,2 @@
+[safety_node-1] [INFO] [1794260098.537735211] [aeris_safety]: AERIS safety initialized: status='/aeris/safety/status', pose_timeout=1.0 s, battery_min=0.25, geofence=20.0 m, heartbeat_timeout=3.0 s.
+[safety_node-1] [INFO] [1794260098.537906078] [aeris_safety]: Services: aeris_safety/inject_fault, aeris_safety/clear_faults

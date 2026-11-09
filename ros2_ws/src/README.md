@@ -13,24 +13,23 @@ or, from the repository root:
 bash scripts/build.sh
 ```
 
-## Active packages (Week 5)
+## Active packages (Week 6)
 
 | Package | Language | Purpose |
 |---|---|---|
-| `aeris_interfaces` | ROS 2 msgs/srvs | Flight/mission status, detections, obstacles, `GoTo` |
+| `aeris_interfaces` | ROS 2 msgs/srvs | Flight/mission/safety status, detections, obstacles, goals, fault injection |
 | `aeris_flight_control` | C++ | PX4 telemetry and offboard control |
-| `aeris_mission_manager` | Python | Mission validation, sequencing, replanning and JSONL logging |
+| `aeris_mission_manager` | Python | Mission validation, sequencing, replanning, safety aborts and JSONL logging |
 | `aeris_perception` | Python | Camera bridge consumer, OpenCV detection and localization |
 | `aeris_navigation` | C++ | Lidar obstacle detection and corridor analysis |
+| `aeris_safety` | C++ | Health monitoring, fault injection and failsafe actions |
 | `aeris_bringup` | Python | Launch files and configuration |
 
 `px4_msgs` is an external Git submodule pinned to PX4 `v1.17.0`. It provides the DDS message definitions that match the simulated firmware.
 
 ## Planned packages
 
-| Package | Language | Target | Purpose |
-|---|---|---|---|
-| `aeris_safety` | C++ | Week 6 | Health checks and failsafe supervision |
+Week 7 adds evaluation tooling rather than new flight packages. Benchmark scripts and reports live under `scripts/` and `docs/experiments/`.
 
 Packages are added when their milestone starts. This keeps the build small and ensures every package has an owner and an acceptance test.
 

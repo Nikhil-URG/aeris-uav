@@ -1,0 +1,10 @@
+{"timestamp": "2026-11-09T21:51:12.513172+00:00", "event": "mission_loaded", "mission": "safety_test", "name": "safety_test", "waypoints": 1, "mission_timeout_s": 180.0}
+{"timestamp": "2026-11-09T21:51:12.513508+00:00", "event": "mission_start", "mission": "safety_test", "mission_file": "/home/lucifer/Documents/Project_Aeris/ros2_ws/install/aeris_bringup/share/aeris_bringup/config/missions/safety_test.yaml"}
+{"timestamp": "2026-11-09T21:51:12.515685+00:00", "event": "state_transition", "mission": "safety_test", "state": "PREFLIGHT", "message": "starting offboard controller"}
+{"timestamp": "2026-11-09T21:51:12.539035+00:00", "event": "state_transition", "mission": "safety_test", "state": "TAKEOFF", "message": "waiting for takeoff and HOLD"}
+{"timestamp": "2026-11-09T21:51:22.830284+00:00", "event": "takeoff_confirmed", "mission": "safety_test"}
+{"timestamp": "2026-11-09T21:51:22.830730+00:00", "event": "state_transition", "mission": "safety_test", "state": "TRANSIT", "message": "transiting to wp_safety (inspect)"}
+{"timestamp": "2026-11-09T21:51:22.830754+00:00", "event": "waypoint_transit", "mission": "safety_test", "index": 0, "id": "wp_safety", "x": 3.0, "y": 0.0, "z": -5.0, "hold_s": 30.0, "action": "inspect", "target_id": "safety_target"}
+{"timestamp": "2026-11-09T21:51:24.759409+00:00", "event": "state_transition", "mission": "safety_test", "state": "INSPECT", "message": "inspecting wp_safety"}
+{"timestamp": "2026-11-09T21:51:24.759526+00:00", "event": "waypoint_reached", "mission": "safety_test", "index": 0, "id": "wp_safety"}
+{"timestamp": "2026-11-09T21:51:26.964053+00:00", "event": "safety_abort", "mission": "safety_test", "faults": ["low_battery"], "action": "rtl", "reason": "safety fault (low_battery); action=rtl"}

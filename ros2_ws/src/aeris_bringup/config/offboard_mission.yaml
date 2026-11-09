@@ -16,6 +16,7 @@ aeris_offboard_controller:
     arm_timeout_s: 10.0
     takeoff_timeout_s: 30.0
     land_timeout_s: 45.0
+    rtl_timeout_s: 180.0
 
     position_tolerance_m: 0.3
     takeoff_speed_mps: 1.0

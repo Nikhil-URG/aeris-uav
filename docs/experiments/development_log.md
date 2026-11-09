@@ -508,6 +508,100 @@ Week 6: safety supervision, fault injection, failsafe/return-to-launch behaviour
 
 ---
 
+## 2026-11-09 — Week 6: safety supervisor, fault injection and failsafes
+
+### Goal
+
+Add an independent safety layer that detects unhealthy flight conditions, injects faults on demand, and commands a deterministic safe action through the existing flight-control abstraction.
+
+### Implemented
+
+- `aeris_interfaces`:
+  - `SafetyStatus.msg`;
+  - `InjectFault.srv`.
+- `aeris_flight_control`:
+  - `~/rtl` service using `VEHICLE_CMD_NAV_RETURN_TO_LAUNCH`;
+  - `~/hold` service;
+  - `RTL` state that stops the offboard stream, waits for landing/disarm and restores `AUTO_LOITER`;
+  - PX4 failsafe is not treated as a local abort while RTL is active.
+- `aeris_safety` C++ package:
+  - pure evaluator in `include/aeris_safety/safety_evaluator.hpp`;
+  - 10 Hz `SafetyStatus` publisher;
+  - pose validity/freshness, battery, geofence and mission-heartbeat monitors;
+  - injectable `stale_pose`, `low_battery`, `geofence_breach`, `mission_heartbeat_loss`;
+  - safe actions via `land`, `rtl` and `hold` services;
+  - startup telemetry gate and armed-only action dispatch.
+- `aeris_mission_manager`:
+  - subscribes to `SafetyStatus`;
+  - aborts sequencing with `safety_abort` when armed and unsafe;
+  - does not override the supervisor's RTL with a local abort/land;
+  - aborts if the safety supervisor heartbeat disappears.
+- `aeris_bringup`:
+  - `config/safety.yaml`;
+  - `launch/safety.launch.py`;
+  - `config/missions/safety_test.yaml`.
+- `scripts/run_safety_fault_test.sh`: one-command fault scenario runner.
+- `scripts/launch_simulation.sh`: keeps the SITL battery healthy by default with `PX4_PARAM_SIM_BAT_MIN_PCT=100` and `PX4_PARAM_SIM_BAT_DRAIN=86400`.
+
+### Results
+
+| Scenario | Fault | Action | Outcome |
+|---|---|---|---|
+| Nominal | none | none | mission `COMPLETE`, safety `safe=true` throughout |
+| Stale pose | `stale_pose` | `land` | `LAND → DONE`, disarmed |
+| Low battery | `low_battery` | `rtl` | `Returning to launch` → landed → disarmed |
+| Geofence breach | `geofence_breach` | `rtl` | `Returning to launch` → landed → disarmed |
+| Mission heartbeat loss | `mission_heartbeat_loss` | `rtl` | `Returning to launch` → landed → disarmed |
+
+All fault runs recorded `safety_abort` in the mission JSONL and the offboard controller reached `DONE`.
+
+Tests:
+
+```text
+aeris_safety:           11/11
+aeris_navigation:        4/4
+aeris_mission_manager:  11/11
+aeris_perception:        4/4
+Total:                  32 tests, 0 failures
+```
+
+Environment check: `18 ok, 0 warnings, 0 failures`.
+
+Evidence:
+
+- `docs/experiments/week6_nominal_mission.jsonl`
+- `docs/experiments/week6_stale_pose_mission.jsonl`
+- `docs/experiments/week6_low_battery_mission.jsonl`
+- `docs/experiments/week6_geofence_breach_mission.jsonl`
+- `docs/experiments/week6_mission_heartbeat_loss_mission.jsonl`
+- `docs/experiments/week6_*_run.log`
+- `docs/experiments/week6_*_safety.log`
+- `docs/safety.md`
+
+### Issues and fixes
+
+1. **Safety status was unsafe before DDS discovery completed.**
+   - The supervisor started before PX4 position topics were matched and reported `stale_pose`; the mission manager aborted at takeoff.
+   - Fix: gate evaluation on pose and vehicle-status telemetry readiness, and require `SafetyStatus.armed` before the mission manager treats a fault as an abort.
+
+2. **Stale mission-manager processes survived a failed test.**
+   - Killing only the `ros2 launch` front-end left the Python node alive; a second mission manager caused goal-sequence mismatches.
+   - Fix: `run_safety_fault_test.sh` starts each launch in its own process group and signals the whole group on cleanup.
+
+3. **PX4's simulated battery failsafe interrupted long campaigns.**
+   - `SIM_BAT_DRAIN` defaults to 60 s from 100% to `SIM_BAT_MIN_PCT` (50%), so PX4 triggered its own RTL.
+   - Fix: keep the SITL battery healthy by default; AERIS battery faults are injected in ROS, independently of PX4's power model.
+
+4. **RTL and the offboard controller's failsafe handling could conflict.**
+   - The controller would abort on PX4 failsafe while already returning to launch.
+   - Fix: add an explicit `RTL` state, stop the offboard stream once PX4 leaves offboard mode, and skip the local failsafe abort while RTL is active.
+
+### Next
+
+Week 7: evaluation harness, benchmark metrics, plots/report and demo packaging.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

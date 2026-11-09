@@ -1,0 +1,26 @@
+mission:
+  name: safety_test
+  frame: local_ned
+
+  home:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+
+  defaults:
+    cruise_altitude_m: 5.0
+    max_speed_mps: 1.5
+    waypoint_tolerance_m: 0.5
+    mission_timeout_s: 180.0
+
+  waypoints:
+    - id: wp_safety
+      x: 3.0
+      y: 0.0
+      z: -5.0
+      hold_s: 30.0
+      action: inspect
+      target_id: safety_target
+
+  return_to_launch: true
+  land_on_complete: true

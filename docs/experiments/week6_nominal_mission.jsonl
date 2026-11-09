@@ -1,0 +1,18 @@
+{"timestamp": "2026-11-09T21:43:12.656967+00:00", "event": "mission_loaded", "mission": "safety_test", "name": "safety_test", "waypoints": 1, "mission_timeout_s": 180.0}
+{"timestamp": "2026-11-09T21:43:12.657197+00:00", "event": "mission_start", "mission": "safety_test", "mission_file": "/home/lucifer/Documents/Project_Aeris/ros2_ws/install/aeris_bringup/share/aeris_bringup/config/missions/safety_test.yaml"}
+{"timestamp": "2026-11-09T21:43:12.658714+00:00", "event": "state_transition", "mission": "safety_test", "state": "PREFLIGHT", "message": "starting offboard controller"}
+{"timestamp": "2026-11-09T21:43:12.680156+00:00", "event": "state_transition", "mission": "safety_test", "state": "TAKEOFF", "message": "waiting for takeoff and HOLD"}
+{"timestamp": "2026-11-09T21:43:22.870952+00:00", "event": "takeoff_confirmed", "mission": "safety_test"}
+{"timestamp": "2026-11-09T21:43:22.871689+00:00", "event": "state_transition", "mission": "safety_test", "state": "TRANSIT", "message": "transiting to wp_safety (inspect)"}
+{"timestamp": "2026-11-09T21:43:22.871718+00:00", "event": "waypoint_transit", "mission": "safety_test", "index": 0, "id": "wp_safety", "x": 3.0, "y": 0.0, "z": -5.0, "hold_s": 30.0, "action": "inspect", "target_id": "safety_target"}
+{"timestamp": "2026-11-09T21:43:24.752165+00:00", "event": "state_transition", "mission": "safety_test", "state": "INSPECT", "message": "inspecting wp_safety"}
+{"timestamp": "2026-11-09T21:43:24.752223+00:00", "event": "waypoint_reached", "mission": "safety_test", "index": 0, "id": "wp_safety"}
+{"timestamp": "2026-11-09T21:43:54.752404+00:00", "event": "target_not_detected", "mission": "safety_test", "index": 0, "id": "wp_safety", "target_id": "safety_target"}
+{"timestamp": "2026-11-09T21:43:54.752646+00:00", "event": "inspection_complete", "mission": "safety_test", "index": 0, "id": "wp_safety", "target_id": "safety_target"}
+{"timestamp": "2026-11-09T21:43:54.753566+00:00", "event": "state_transition", "mission": "safety_test", "state": "TRANSIT", "message": "returning to launch"}
+{"timestamp": "2026-11-09T21:43:54.753622+00:00", "event": "rtl_transit", "mission": "safety_test", "x": 0.0, "y": 0.0, "z": -5.0}
+{"timestamp": "2026-11-09T21:43:56.680807+00:00", "event": "rtl_reached", "mission": "safety_test"}
+{"timestamp": "2026-11-09T21:43:56.681740+00:00", "event": "state_transition", "mission": "safety_test", "state": "LAND", "message": "landing at current position"}
+{"timestamp": "2026-11-09T21:43:56.681819+00:00", "event": "landing", "mission": "safety_test"}
+{"timestamp": "2026-11-09T21:44:07.749327+00:00", "event": "state_transition", "mission": "safety_test", "state": "COMPLETE", "message": "mission complete"}
+{"timestamp": "2026-11-09T21:44:07.749423+00:00", "event": "mission_complete", "mission": "safety_test"}

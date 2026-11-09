@@ -49,6 +49,7 @@ public:
     arm_timeout_s_ = this->declare_parameter<double>("arm_timeout_s", 10.0);
     takeoff_timeout_s_ = this->declare_parameter<double>("takeoff_timeout_s", 30.0);
     land_timeout_s_ = this->declare_parameter<double>("land_timeout_s", 45.0);
+    rtl_timeout_s_ = this->declare_parameter<double>("rtl_timeout_s", 180.0);
     position_tolerance_m_ = this->declare_parameter<double>("position_tolerance_m", 0.3);
     takeoff_speed_mps_ = this->declare_parameter<double>("takeoff_speed_mps", 1.0);
     max_altitude_m_ = this->declare_parameter<double>("max_altitude_m", 10.0);
@@ -68,6 +69,7 @@ public:
     max_hold_error_m_ = std::clamp(max_hold_error_m_, 0.2, 10.0);
     telemetry_timeout_s_ = std::clamp(telemetry_timeout_s_, 0.2, 10.0);
     abort_grace_s_ = std::clamp(abort_grace_s_, 0.5, 10.0);
+    rtl_timeout_s_ = std::clamp(rtl_timeout_s_, 10.0, 600.0);
     start_delay_s_ = std::max(start_delay_s_, 0.0);
     hold_duration_s_ = std::max(hold_duration_s_, 0.0);
 
@@ -126,6 +128,16 @@ public:
       std::bind(&OffboardController::land_callback, this,
         std::placeholders::_1, std::placeholders::_2));
 
+    rtl_service_ = this->create_service<std_srvs::srv::Trigger>(
+      "~/rtl",
+      std::bind(&OffboardController::rtl_callback, this,
+        std::placeholders::_1, std::placeholders::_2));
+
+    hold_service_ = this->create_service<std_srvs::srv::Trigger>(
+      "~/hold",
+      std::bind(&OffboardController::hold_callback, this,
+        std::placeholders::_1, std::placeholders::_2));
+
     flight_status_pub_ =
       this->create_publisher<aeris_interfaces::msg::FlightStatus>(
         "/aeris_offboard_controller/flight_status", 10);
@@ -163,8 +175,8 @@ public:
 
     RCLCPP_INFO(
       get_logger(),
-      "Services: %s/start, %s/go_to, %s/land, %s/abort",
-      get_name(), get_name(), get_name(), get_name());
+      "Services: %s/start, %s/go_to, %s/hold, %s/land, %s/rtl, %s/abort",
+      get_name(), get_name(), get_name(), get_name(), get_name(), get_name());
   }
 
 private:
@@ -177,6 +189,7 @@ private:
     TAKEOFF,
     HOLD,
     TRANSIT,
+    RTL,
     LAND,
     ABORT_LAND,
     DONE,
@@ -193,6 +206,7 @@ private:
       case State::TAKEOFF: return "TAKEOFF";
       case State::HOLD: return "HOLD";
       case State::TRANSIT: return "TRANSIT";
+      case State::RTL: return "RTL";
       case State::LAND: return "LAND";
       case State::ABORT_LAND: return "ABORT_LAND";
       case State::DONE: return "DONE";
@@ -390,6 +404,62 @@ private:
     response->message = "landing requested";
   }
 
+  void rtl_callback(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    if (state_ != State::HOLD && state_ != State::TRANSIT) {
+      response->success = false;
+      response->message = std::string("rtl rejected in state ") + state_name(state_);
+      return;
+    }
+
+    if (!have_status_ ||
+      status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED)
+    {
+      response->success = false;
+      response->message = "rtl rejected: vehicle is not armed";
+      return;
+    }
+
+    rtl_requested_ = true;
+    response->success = true;
+    response->message = "return-to-launch requested";
+  }
+
+  void hold_callback(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    if (state_ != State::HOLD && state_ != State::TRANSIT) {
+      response->success = false;
+      response->message = std::string("hold rejected in state ") + state_name(state_);
+      return;
+    }
+
+    if (!have_status_ ||
+      status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED ||
+      !have_control_mode_ || !control_mode_.flag_control_offboard_enabled)
+    {
+      response->success = false;
+      response->message = "hold rejected: vehicle is not armed in offboard mode";
+      return;
+    }
+
+    goal_active_ = false;
+    goal_reached_ = false;
+    goal_failed_ = false;
+    target_x_ = position_.x;
+    target_y_ = position_.y;
+    target_z_ = position_.z;
+    target_initialized_ = true;
+    if (state_ == State::TRANSIT) {
+      transition_to(State::HOLD, "hold requested");
+    }
+    response->success = true;
+    response->message = "holding at current position";
+  }
+
   // -----------------------------------------------------------------------
   // Timers
   // -----------------------------------------------------------------------
@@ -471,7 +541,7 @@ private:
         return;
       }
 
-      if (status_.failsafe) {
+      if (status_.failsafe && state_ != State::RTL) {
         abort_mission("PX4 reports failsafe");
         return;
       }
@@ -498,6 +568,9 @@ private:
         break;
       case State::TRANSIT:
         handle_transit(now);
+        break;
+      case State::RTL:
+        handle_rtl(now);
         break;
       case State::LAND:
         handle_land(now);
@@ -630,6 +703,14 @@ private:
 
   void handle_hold(const std::chrono::steady_clock::time_point & /*now*/)
   {
+    if (rtl_requested_) {
+      rtl_requested_ = false;
+      goal_active_ = false;
+      transition_to(State::RTL, "return-to-launch requested");
+      send_rtl_command();
+      return;
+    }
+
     if (land_requested_) {
       land_requested_ = false;
       transition_to(State::LAND, "land requested");
@@ -682,6 +763,14 @@ private:
 
   void handle_transit(const std::chrono::steady_clock::time_point & now)
   {
+    if (rtl_requested_) {
+      rtl_requested_ = false;
+      goal_active_ = false;
+      transition_to(State::RTL, "return-to-launch requested");
+      send_rtl_command();
+      return;
+    }
+
     if (land_requested_) {
       land_requested_ = false;
       transition_to(State::LAND, "land requested");
@@ -734,6 +823,44 @@ private:
         "Waypoint timeout after %.1f s (error=%.2f m, tolerance=%.2f m).",
         goal_timeout_s_, error, goal_tolerance_m_);
       transition_to(State::HOLD, "waypoint timeout");
+    }
+  }
+
+  void handle_rtl(const std::chrono::steady_clock::time_point & now)
+  {
+    if (status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED) {
+      goal_active_ = false;
+      send_auto_loiter_mode_command();
+      streaming_ = false;
+      transition_to(State::DONE, "returned to launch and disarmed");
+      log_summary();
+      return;
+    }
+
+    const bool rtl_active =
+      status_.nav_state == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_AUTO_RTL ||
+      !control_mode_.flag_control_offboard_enabled;
+
+    if (rtl_active) {
+      if (streaming_) {
+        streaming_ = false;
+        RCLCPP_INFO(get_logger(), "RTL mode active; offboard stream stopped.");
+      }
+      RCLCPP_INFO_THROTTLE(
+        get_logger(), *get_clock(), 2000,
+        "RTL: position=(%.2f, %.2f, %.2f), waiting for landing and disarm.",
+        position_.x, position_.y, position_.z);
+    } else if (age_s(last_command_time_, now) >= kCommandResendPeriodS) {
+      send_rtl_command();
+    }
+
+    if (elapsed_in_state_s() > rtl_timeout_s_) {
+      RCLCPP_WARN(
+        get_logger(),
+        "RTL did not engage within %.1f s; landing at the current position.",
+        rtl_timeout_s_);
+      transition_to(State::LAND, "rtl timeout; landing at current position");
+      send_land_command();
     }
   }
 
@@ -827,6 +954,7 @@ private:
     goal_reached_ = false;
     goal_failed_ = false;
     land_requested_ = false;
+    rtl_requested_ = false;
 
     streaming_ = true;
     hold_error_active_ = false;
@@ -1048,6 +1176,14 @@ private:
       get_logger(), *get_clock(), 2000, "Requesting landing at current position.");
   }
 
+  void send_rtl_command()
+  {
+    publish_vehicle_command(
+      px4_msgs::msg::VehicleCommand::VEHICLE_CMD_NAV_RETURN_TO_LAUNCH);
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 2000, "Requesting return to launch.");
+  }
+
   void send_auto_loiter_mode_command()
   {
     // AUTO_LOITER is a safe post-landing mode in this GCS-only SITL setup:
@@ -1082,6 +1218,7 @@ private:
   double arm_timeout_s_{10.0};
   double takeoff_timeout_s_{30.0};
   double land_timeout_s_{45.0};
+  double rtl_timeout_s_{180.0};
   double position_tolerance_m_{0.3};
   double takeoff_speed_mps_{1.0};
   double max_altitude_m_{10.0};
@@ -1137,6 +1274,7 @@ private:
   bool goal_reached_{false};
   bool goal_failed_{false};
   bool land_requested_{false};
+  bool rtl_requested_{false};
   std::chrono::steady_clock::time_point goal_start_time_;
 
   // -----------------------------------------------------------------------
@@ -1156,6 +1294,8 @@ private:
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr abort_service_;
   rclcpp::Service<aeris_interfaces::srv::GoTo>::SharedPtr go_to_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr land_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr rtl_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr hold_service_;
 
   rclcpp::TimerBase::SharedPtr setpoint_timer_;
   rclcpp::TimerBase::SharedPtr state_timer_;

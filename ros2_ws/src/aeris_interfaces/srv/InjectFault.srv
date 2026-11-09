@@ -1,0 +1,14 @@
+# Fault names:
+#   stale_pose
+#   low_battery
+#   geofence_breach
+#   mission_heartbeat_loss
+#   all
+#
+# enable=false clears the selected fault. "all" with enable=false clears
+# every injected fault.
+string fault
+bool enable
+---
+bool success
+string message

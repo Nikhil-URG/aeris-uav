@@ -109,15 +109,15 @@ PX4 v1.17 appends a `_v1` suffix to versioned DDS messages (for example `vehicle
 
 | Package | Language | Status | Responsibility |
 |---|---|---|---|
-| `aeris_interfaces` | ROS 2 msgs/srvs | Planned (Week 3) | AERIS-specific mission messages |
+| `aeris_interfaces` | ROS 2 msgs/srvs | Active | Mission, flight, perception, obstacle and safety interfaces |
 | `aeris_bringup` | Python | Active | Launch files and configuration |
 | `aeris_flight_control` | C++ | Active | PX4 communication, offboard control |
-| `aeris_mission_manager` | Python | Planned (Week 3) | Mission state machine |
-| `aeris_navigation` | C++ | Planned (Week 5) | Trajectory and obstacle planning |
-| `aeris_perception` | Python | Planned (Week 4) | Image processing and detection |
-| `aeris_safety` | C++ | Planned (Week 6) | Health checks and safety supervision |
+| `aeris_mission_manager` | Python | Active | Mission state machine, replanning, safety aborts |
+| `aeris_navigation` | C++ | Active | Lidar obstacle detection and corridor analysis |
+| `aeris_perception` | Python | Active | Camera, OpenCV detection and localization |
+| `aeris_safety` | C++ | Active | Health checks, fault injection and failsafe supervision |
 
-Only `aeris_flight_control` and `aeris_bringup` are built in Week 1. The remaining packages are created when their milestone begins, so the build stays small and every directory has a purpose.
+All packages are built by Week 6. Week 7 adds evaluation tooling rather than new flight packages.
 
 ## 8. Safety architecture
 
@@ -125,7 +125,7 @@ Layers, from lowest to highest latency:
 
 1. **PX4 failsafes:** data-link loss, RC loss, battery, geofence, offboard-loss behaviour.
 2. **Offboard watchdog:** `aeris_flight_control` stops streaming if its own health checks fail; PX4 then executes its configured offboard-loss action.
-3. **Mission supervisor:** `aeris_safety` (Week 6) monitors pose validity, estimator health, battery, mission timeout and geofence, and can command RTL or land.
+3. **Mission supervisor:** `aeris_safety` monitors pose validity, estimator health, battery, mission heartbeat and geofence, and commands RTL, land or hold through the offboard controller.
 4. **Operator:** QGC remains the manual override and monitoring surface.
 
 Safety rules:
@@ -141,7 +141,7 @@ Safety rules:
 - **rosbag2:** record selected topics for every scenario run.
 - **Health topics:** validity flags from PX4, node heartbeats, setpoint age.
 - **Experiment records:** commands, versions, parameters and metrics in `docs/experiments/`.
-- **Fault injection:** Week 6 adds deterministic faults (dropped setpoints, invalid pose, simulated link loss).
+- **Fault injection:** `aeris_safety` provides deterministic stale-pose, low-battery, geofence-breach and mission-heartbeat-loss faults through `/aeris_safety/inject_fault`.
 
 ## 10. Architectural decisions
 

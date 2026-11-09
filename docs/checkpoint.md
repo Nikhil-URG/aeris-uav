@@ -1,14 +1,15 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-09  
-**Phase:** Week 5 complete — Week 6 (safety) is next  
+**Phase:** Week 6 complete — Week 7 (evaluation) is next  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
 **Week 2 tag:** `week-2-checkpoint` (commit `0666e09`)  
 **Week 3 tag:** `week-3-checkpoint` (commit `ba262c9`)  
 **Week 4 tag:** `week-4-checkpoint` (commit `8618b01`)  
-**Week 5 tag:** `week-5-checkpoint` (this checkpoint commit)  
+**Week 5 tag:** `week-5-checkpoint` (commit `4237774`)  
+**Week 6 tag:** `week-6-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -55,7 +56,7 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | ROS 2 | Jazzy (`/opt/ros/jazzy`) |
 | System Python | 3.12.3 at `/usr/bin/python3` |
 | NVIDIA driver | `595.104.02` (`nvidia-smi` works after reboot) |
-| Workspace build | `px4_msgs`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_bringup` |
+| Workspace build | `px4_msgs`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `aeris_bringup` |
 | Telemetry rate | **50.005 Hz** on `/fmu/out/vehicle_local_position_v1` |
 | Offboard stream | **20 Hz** (`OffboardControlMode` + `TrajectorySetpoint`) |
 | Idle heartbeat | **2 Hz** while no mission is active |
@@ -77,10 +78,15 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Navigation | Sector obstacle map + corridor check, 4/4 tests |
 | Obstacle replan | 3.75 m obstacle → detour `(1.54, 1.94)` → wp_02 reached |
 | Navigation evidence | `docs/experiments/week5_mission.jsonl` |
+| Safety supervisor | Pose, battery, geofence, mission heartbeat; 10 Hz `SafetyStatus` |
+| Fault injection | `stale_pose`, `low_battery`, `geofence_breach`, `mission_heartbeat_loss` |
+| Safety actions | Stale pose → land; other faults → RTL; all flights disarmed |
+| Safety tests | 11/11 evaluator tests; workspace total 32/32 |
+| Safety evidence | `docs/experiments/week6_*_mission.jsonl` |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
-| Environment check | `17 ok, 0 warnings, 0 failures` |
+| Environment check | `18 ok, 0 warnings, 0 failures` |
 
-Milestone 1–5 acceptance are complete.
+Milestone 1–6 acceptance are complete.
 
 ---
 
@@ -127,6 +133,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── mission_design.md           # Week 3 state machine and mission schema
 │   ├── perception.md               # Week 4 camera + OpenCV detection
 │   ├── navigation.md               # Week 5 lidar + replanning
+│   ├── safety.md                   # Week 6 supervisor + faults
 │   ├── checkpoint.md               # this file
 │   └── experiments/
 │       ├── development_log.md
@@ -138,7 +145,13 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │       ├── week4_perception.log
 │       ├── week5_mission.jsonl
 │       ├── week5_mission_run.log
-│       └── week5_navigation.log
+│       ├── week5_navigation.log
+│       ├── week6_nominal_mission.jsonl
+│       ├── week6_stale_pose_mission.jsonl
+│       ├── week6_low_battery_mission.jsonl
+│       ├── week6_geofence_breach_mission.jsonl
+│       ├── week6_mission_heartbeat_loss_mission.jsonl
+│       └── week6_*_run.log / week6_*_safety.log
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
 │   ├── px4_msgs/                   # Git submodule, v1.17.0
@@ -147,6 +160,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── aeris_mission_manager/      # Python mission manager
 │   ├── aeris_perception/           # OpenCV target detection
 │   ├── aeris_navigation/           # Lidar obstacle detection
+│   ├── aeris_safety/               # Health monitoring + fault injection
 │   └── aeris_bringup/              # launch + YAML + missions
 ├── scripts/
 │   ├── setup.sh
@@ -160,8 +174,9 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── run_qgroundcontrol.sh
 │   ├── spawn_targets.sh
 │   ├── spawn_obstacle.sh
+│   ├── run_safety_fault_test.sh
 │   ├── check_environment.sh
-│   └── evaluate_mission.py         # Week 7 placeholder
+│   └── evaluate_mission.py         # Week 7 evaluation entry point
 ├── simulation/
 │   ├── models/red_target/          # Week 4 inspection target
 │   ├── models/tall_obstacle/       # Week 5 obstacle
@@ -171,7 +186,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 └── results/                        # logs/plots/reports (ignored)
 ```
 
-Key Week 2–5 files:
+Key Week 2–6 files:
 
 - `ros2_ws/src/aeris_flight_control/src/offboard_controller.cpp`
 - `ros2_ws/src/aeris_mission_manager/aeris_mission_manager/mission.py`
@@ -180,22 +195,29 @@ Key Week 2–5 files:
 - `ros2_ws/src/aeris_perception/aeris_perception/node.py`
 - `ros2_ws/src/aeris_navigation/src/navigation_node.cpp`
 - `ros2_ws/src/aeris_navigation/include/aeris_navigation/scan_analysis.hpp`
+- `ros2_ws/src/aeris_safety/src/safety_node.cpp`
+- `ros2_ws/src/aeris_safety/include/aeris_safety/safety_evaluator.hpp`
 - `ros2_ws/src/aeris_bringup/config/offboard.yaml`
 - `ros2_ws/src/aeris_bringup/config/offboard_mission.yaml`
 - `ros2_ws/src/aeris_bringup/config/gz_camera_bridge.yaml`
 - `ros2_ws/src/aeris_bringup/config/gz_lidar_bridge.yaml`
+- `ros2_ws/src/aeris_bringup/config/safety.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/inspection_alpha.yaml`
+- `ros2_ws/src/aeris_bringup/config/missions/safety_test.yaml`
 - `ros2_ws/src/aeris_bringup/launch/offboard.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/mission.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/perception.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/navigation.launch.py`
+- `ros2_ws/src/aeris_bringup/launch/safety.launch.py`
 - `docs/flight_control.md`
 - `docs/perception.md`
 - `docs/navigation.md`
+- `docs/safety.md`
 - `docs/experiments/week2_offboard_run.log`
 - `docs/experiments/week3_mission.jsonl`
 - `docs/experiments/week4_mission.jsonl`
 - `docs/experiments/week5_mission.jsonl`
+- `docs/experiments/week6_*_mission.jsonl`
 
 ---
 
@@ -217,7 +239,7 @@ source scripts/aeris_env.sh
 bash scripts/check_environment.sh
 ```
 
-Expected: system Python 3.12, ROS Jazzy, Gazebo 8.x, PX4 `v1.17.0`, agent installed, workspace built, `12 ok, 0 warnings, 0 failures`.
+Expected: system Python 3.12, ROS Jazzy, Gazebo 8.x, PX4 `v1.17.0`, agent installed, workspace built, `18 ok, 0 warnings, 0 failures`.
 
 If dependencies are missing, run the setup scripts in order:
 
@@ -358,7 +380,32 @@ source scripts/aeris_env.sh
 ros2 launch aeris_bringup navigation.launch.py
 ```
 
-Then run the mission as in §5.6. The mission manager should log `obstacle_detected`, a lateral `replan`, reach the original waypoint and complete. Restart the SITL session between long test campaigns; the simulated battery drains and can block preflight.
+Then run the mission as in §5.6. The mission manager should log `obstacle_detected`, a lateral `replan`, reach the original waypoint and complete.
+
+### 5.10 Safety and fault-injection demo
+
+Start the mission stack with the short safety mission and the supervisor:
+
+```bash
+source scripts/aeris_env.sh
+MISSION_FILE=$(ros2 pkg prefix aeris_bringup)/share/aeris_bringup/config/missions/safety_test.yaml
+ros2 launch aeris_bringup mission.launch.py mission_file:="$MISSION_FILE"
+ros2 launch aeris_bringup safety.launch.py
+```
+
+Start the mission, then inject a fault during the hold:
+
+```bash
+ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
+ros2 service call /aeris_safety/inject_fault aeris_interfaces/srv/InjectFault \
+  "{fault: stale_pose, enable: true}"
+```
+
+Expected: `stale_pose` → land; `low_battery`, `geofence_breach`, `mission_heartbeat_loss` → RTL. The mission JSONL records `safety_abort`, and the vehicle lands and disarms. The complete scenario runner is:
+
+```bash
+bash scripts/run_safety_fault_test.sh low_battery
+```
 
 ---
 
@@ -465,11 +512,23 @@ The simulated obstacle sits near 3.75 m at the check point. The mission manager 
 
 ### 6.19 The simulated battery drains over long sessions
 
-PX4's simulated battery can become `battery_unhealthy` after repeated flights in one session, which blocks preflight and looks like a software failure. Restart SITL for a clean battery before a test campaign.
+PX4's battery simulator defaults to draining from 100% to 50% in 60 s (`SIM_BAT_DRAIN=60`, `SIM_BAT_MIN_PCT=50`). That can trigger PX4's own battery failsafe and look like a software failure. `scripts/launch_simulation.sh` now sets `PX4_PARAM_SIM_BAT_MIN_PCT=100` and `PX4_PARAM_SIM_BAT_DRAIN=86400` by default. Override them to test PX4's battery path explicitly.
 
 ### 6.20 PX4 local frame vs Gazebo world
 
 Spawned models live in Gazebo world coordinates while the mission uses PX4 local NED. The origin offset is small but real; it can shift targets/obstacles by a few tenths of a metre. Use lidar/camera-relative checks or calibrate the spawn offset for precise map alignment.
+
+### 6.21 The safety supervisor must wait for telemetry
+
+At startup the safety node can match PX4 topics a second or two after the mission manager. Evaluating immediately produces a false `stale_pose` and aborts the mission. The supervisor gates evaluation on pose + vehicle-status readiness, and the mission manager only treats an unsafe status as an abort when `SafetyStatus.armed` is true.
+
+### 6.22 Launch cleanup must kill the process group
+
+Killing only the `ros2 launch` front-end can leave Python nodes alive. A stale mission manager with the same node name causes goal-sequence mismatches that look like flight-control bugs. `run_safety_fault_test.sh` starts each launch with `setsid` and signals the whole process group. Check for stale nodes with `ps -eo pid,args | grep -E 'mission_manager|offboard_controller'`.
+
+### 6.23 RTL must not be overridden by the local abort path
+
+When `~/rtl` is commanded, PX4 leaves offboard mode. The controller must enter its explicit `RTL` state, stop the offboard stream, and not treat the resulting offboard/failsafe transition as an abort. Otherwise it sends `NAV_LAND` and overrides the return-to-launch decision.
 
 ---
 
@@ -537,49 +596,58 @@ Spawned models live in Gazebo world coordinates while the mission uses PX4 local
 | Original waypoint reached | PASS |
 | Mission | COMPLETE |
 
-Evidence: `docs/experiments/week5_mission.jsonl`, `docs/experiments/week5_navigation.log`.
+### Milestone 6 — safety, fault injection and failsafes
+
+| Check | Result |
+|---|---|
+| Safety supervisor | PASS — 10 Hz `SafetyStatus` |
+| Evaluator tests | PASS — 11/11 |
+| Nominal flight | PASS — `safe=true` throughout, mission `COMPLETE` |
+| `stale_pose` | PASS — `land`, `DONE`, disarmed |
+| `low_battery` | PASS — `rtl`, PX4 RTL, disarmed |
+| `geofence_breach` | PASS — `rtl`, PX4 RTL, disarmed |
+| `mission_heartbeat_loss` | PASS — `rtl`, PX4 RTL, disarmed |
+| JSONL `safety_abort` | PASS — every fault run |
+| Workspace tests | PASS — 32/32 |
+
+Evidence: `docs/experiments/week6_nominal_mission.jsonl`, `docs/experiments/week6_*_mission.jsonl`, `docs/experiments/week6_*_run.log`, `docs/experiments/week6_*_safety.log`.
 
 ---
 
-## 8. Week 6 plan — safety, fault injection and failsafes
+## 8. Week 7 plan — evaluation, benchmarks and demo packaging
 
 ### Goal
 
-Add an independent safety supervisor that detects unhealthy conditions, injects faults on demand, and commands a safe outcome without bypassing the flight-control abstraction.
+Measure the complete stack, produce reproducible benchmark evidence, plots and a final report, and package the demo so another engineer can reproduce it.
 
 ### Deliverables
 
-1. `aeris_interfaces`:
-   - `SafetyStatus.msg` (safe, active faults, pose age, battery, geofence, heartbeat age);
-   - `InjectFault.srv` (fault name, enable/disable);
-   - `SetSafetyAction.srv` or equivalent for RTL/land/hold.
-2. `aeris_safety` C++ package:
-   - monitor pose validity/freshness, battery, geofence, mission heartbeat and offboard stream;
-   - publish `/aeris/safety/status` at 10 Hz;
-   - injectable faults: stale pose, low battery, geofence breach, mission heartbeat loss;
-   - safe actions: call the offboard controller's `~/land`, `~/abort` and a new `~/rtl` service.
-3. `aeris_flight_control`:
-   - add `~/rtl` (`VEHICLE_CMD_NAV_RETURN_TO_LAUNCH`) while retaining the existing land/abort paths.
-4. `aeris_mission_manager`:
-   - subscribe to `SafetyStatus`;
-   - abort the mission when safety is not OK and record the reason.
-5. Tests:
-   - unit tests for the safety evaluation logic;
-   - SITL fault scenarios: stale pose during HOLD, low battery, geofence breach, mission heartbeat loss;
-   - verify RTL/land and JSONL evidence.
-6. `safety.launch.py` and config.
+1. `scripts/evaluate_mission.py`:
+   - parse mission JSONL runs;
+   - compute takeoff time, waypoint transit times, inspection holds, RTL/land time and total duration;
+   - count detections, obstacle detections, replans, safety faults and aborts;
+   - emit JSON and CSV metrics.
+2. Benchmark scenario runs:
+   - nominal two-waypoint mission;
+   - perception mission with two targets;
+   - obstacle mission with detour;
+   - safety fault campaign (four faults).
+3. Plots/report:
+   - `docs/evaluation.md` with methodology, metrics, tables, limitations;
+   - plots under `results/` and checked-in evidence in `docs/experiments/`.
+4. Demo packaging:
+   - one-command or documented launch sequence;
+   - final README quick start and demo checklist.
+5. Regression:
+   - full build, all tests and `check_environment.sh` pass.
 
-### Week 6 acceptance
+### Week 7 acceptance
 
-- Safety status visible and healthy in nominal flight.
-- Each injected fault produces a deterministic safe action.
-- The mission log records the fault and the abort/RTL.
-- The vehicle lands/returns without crashing.
-- No regression in the Week 5 obstacle mission.
-
-### Week 7 preview
-
-- Evaluation harness metrics, benchmark runs, plots, report and demo packaging.
+- Evaluation harness runs against the recorded Week 3–6 evidence.
+- Benchmark metrics are reproducible and checked in.
+- Final report and plots exist.
+- The demo sequence is documented and verified.
+- No regression in the safety, navigation or perception stacks.
 
 ---
 
@@ -599,25 +667,31 @@ Read these files first:
 - docs/flight_control.md
 - docs/mission_design.md
 - docs/perception.md
+- docs/navigation.md
+- docs/safety.md
 - docs/experiments/development_log.md
-- docs/experiments/week2_offboard_run.log
 - docs/experiments/week3_mission.jsonl
 - docs/experiments/week4_mission.jsonl
+- docs/experiments/week5_mission.jsonl
+- docs/experiments/week6_*_mission.jsonl
 
 Current state:
-- Weeks 1–4 are complete.
-- aeris_flight_control: 20 Hz offboard stream, arm, takeoff to 5 m, HOLD/TRANSIT, go_to, land, abort, FlightStatus at 10 Hz.
-- aeris_mission_manager: YAML validation, sequential waypoints, RTL, landing, JSONL logs; 11/11 tests pass.
-- aeris_perception: downward mono camera, OpenCV red-panel detection, detection messages, 4/4 tests; mission logs target_detected at both inspection waypoints.
-- Verified mission: inspection_alpha, 2/2 waypoints, detections, RTL, land, COMPLETE in ~33.8 s.
-- Perception: gz_x500_mono_cam_down, 1280x960, ~12.8 Hz; ros_gz_bridge; PYTHONNOUSERSITE=1 required for apt OpenCV/NumPy.
-- Flight evidence: docs/experiments/week3_mission.jsonl and week4_mission.jsonl.
+- Weeks 1–6 are complete.
+- aeris_flight_control: 20 Hz offboard stream, arm, takeoff to 5 m, HOLD/TRANSIT/RTL/LAND, go_to/hold/land/rtl/abort, FlightStatus at 10 Hz.
+- aeris_mission_manager: YAML validation, sequential waypoints, RTL, landing, obstacle replanning, safety aborts, JSONL logs; 11/11 tests pass.
+- aeris_perception: downward mono camera, OpenCV red-panel detection, 4/4 tests; mission logs target_detected at both inspection waypoints.
+- aeris_navigation: 270° lidar sector obstacle map and corridor check, 4/4 tests; obstacle mission logged a 3.75 m detection and detour to (1.54, 1.94).
+- aeris_safety: pose/battery/geofence/heartbeat supervision, fault injection, land/RTL actions, 11/11 tests. All four injected faults were verified in SITL.
+- Workspace total: 32 tests, 0 failures; environment check 18 ok.
+- Perception uses gz_x500_mono_cam_down; navigation uses gz_x500_lidar_2d; ros_gz_bridge is installed.
+- PYTHONNOUSERSITE=1 is required for apt OpenCV/NumPy; aeris_env.sh sets it.
+- launch_simulation.sh keeps the SITL battery healthy with PX4_PARAM_SIM_BAT_MIN_PCT=100 and PX4_PARAM_SIM_BAT_DRAIN=86400.
 - PX4 v1.17 uses _v1 topic suffixes for vehicle_local_position and vehicle_status.
 - Always run `source scripts/aeris_env.sh` before ROS/PX4 commands; it keeps conda's Python 3.13 out of the ROS shell.
 - Never pipe PX4's interactive console through tee; launch_simulation.sh uses `script` for PTY logging.
 
-Next task: implement Week 5, obstacle detection and local replanning.
-Use gz_x500_lidar_2d, bridge LaserScan to /aeris/lidar/scan, add aeris_navigation with a forward-cone obstacle check and lateral detour, integrate with the mission manager (obstacle_detected/replan JSONL), add a tall obstacle model and an obstacle mission, and test it in SITL.
+Next task: implement Week 7, evaluation and demo packaging.
+Add scripts/evaluate_mission.py, parse the recorded mission JSONL runs, compute mission/detection/obstacle/safety metrics, emit JSON/CSV, generate plots, write docs/evaluation.md, and produce a reproducible demo quick start. Run the full test suite and environment check before checkpointing.
 
 Before changing code, run:
   source scripts/aeris_env.sh
@@ -643,7 +717,9 @@ Current branch: `main`. All checkpoint tags are pushed:
 - `week-1-checkpoint` — Week 1 telemetry foundation (`0486c1e`)
 - `week-2-checkpoint` — Week 2 offboard flight (`0666e09`)
 - `week-3-checkpoint` — Week 3 mission manager (`ba262c9`)
-- `week-4-checkpoint` — Week 4 perception (this checkpoint)
+- `week-4-checkpoint` — Week 4 perception (`8618b01`)
+- `week-5-checkpoint` — Week 5 obstacle avoidance (`4237774`)
+- `week-6-checkpoint` — Week 6 safety supervisor (this checkpoint)
 
 Push subsequent changes:
 
@@ -654,8 +730,8 @@ git push origin main
 Create a future checkpoint:
 
 ```bash
-git tag -a week-5-checkpoint -m "Week 5 complete: obstacle avoidance verified"
-git push origin week-5-checkpoint
+git tag -a week-7-checkpoint -m "Week 7 complete: evaluation and demo"
+git push origin week-7-checkpoint
 ```
 
 The repository contains a submodule (`px4_msgs`). A fresh clone should use:
@@ -683,14 +759,16 @@ ros2 pkg list | grep -E '^(aeris_|px4_msgs)'
 ros2 pkg executables aeris_flight_control
 ros2 pkg executables aeris_mission_manager
 ros2 pkg executables aeris_perception
+ros2 pkg executables aeris_navigation
+ros2 pkg executables aeris_safety
 ```
 
 Expected:
 
-- `16 ok, 0 warnings, 0 failures`
+- `18 ok, 0 warnings, 0 failures`
 - clean working tree
-- `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `px4_msgs`
-- executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`, `perception`
+- `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `px4_msgs`
+- executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`, `perception`, `navigation_node`, `safety_node`
 - `ros_gz_bridge` installed
 
 Then start the simulation and run the full mission demo as in §5.

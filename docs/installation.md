@@ -292,7 +292,34 @@ ros2 launch aeris_bringup navigation.launch.py
 
 Run the mission as above. The mission manager logs `obstacle_detected` and `replan`, flies a lateral detour, then continues to the original waypoint. See [navigation.md](navigation.md).
 
-Restart the SITL session between long test campaigns: the simulated battery drains over time and can block preflight checks.
+### Safety supervisor and fault injection
+
+Start the mission stack with the short safety mission and the supervisor:
+
+```bash
+source scripts/aeris_env.sh
+MISSION_FILE=$(ros2 pkg prefix aeris_bringup)/share/aeris_bringup/config/missions/safety_test.yaml
+ros2 launch aeris_bringup mission.launch.py mission_file:="$MISSION_FILE"
+ros2 launch aeris_bringup safety.launch.py
+```
+
+Start the mission, then inject a fault during the inspection hold:
+
+```bash
+ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
+ros2 service call /aeris_safety/inject_fault aeris_interfaces/srv/InjectFault \
+  "{fault: stale_pose, enable: true}"
+```
+
+`stale_pose` commands a landing; `low_battery`, `geofence_breach` and `mission_heartbeat_loss` command RTL. The mission manager records `safety_abort`. A complete scenario can be run with:
+
+```bash
+bash scripts/run_safety_fault_test.sh low_battery
+```
+
+See [safety.md](safety.md).
+
+`scripts/launch_simulation.sh` keeps the simulated battery healthy by default (`PX4_PARAM_SIM_BAT_MIN_PCT=100`, `PX4_PARAM_SIM_BAT_DRAIN=86400`). PX4's own battery failsafe would otherwise interrupt long test campaigns; AERIS battery faults are injected in ROS.
 
 ## 6. QGroundControl (optional but recommended)
 

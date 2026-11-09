@@ -57,6 +57,13 @@ if [[ -n "${PX4_GZ_WORLD:-}" ]]; then
   export PX4_GZ_WORLD
 fi
 
+# Keep the SITL battery healthy during normal test campaigns. PX4's simulated
+# battery would otherwise trigger its own battery failsafe mid-mission, which
+# is unrelated to the AERIS safety supervisor (faults are injected in ROS).
+# Override these variables if you explicitly want to test PX4's battery path.
+export PX4_PARAM_SIM_BAT_MIN_PCT="${PX4_PARAM_SIM_BAT_MIN_PCT:-100}"
+export PX4_PARAM_SIM_BAT_DRAIN="${PX4_PARAM_SIM_BAT_DRAIN:-86400}"
+
 cd "$PX4_DIR"
 echo "[launch] Starting PX4 SITL (model=${PX4_SIM_MODEL}, headless=${HEADLESS:-0})."
 echo "[launch] Agent log: $LOG_DIR/microxrce_agent.log"

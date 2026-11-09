@@ -18,6 +18,7 @@ from aeris_interfaces.msg import (
     FlightStatus,
     MissionStatus,
     ObstacleArray,
+    SafetyStatus,
 )
 from aeris_interfaces.srv import GoTo
 from aeris_mission_manager.mission import (
@@ -29,6 +30,16 @@ from aeris_mission_manager.mission import (
 import rclpy
 from rclpy.node import Node
 from std_srvs.srv import Trigger
+
+
+class SafetyAbort(RuntimeError):
+    """Raised when the safety supervisor declares the flight unsafe."""
+
+    def __init__(self, faults: list[str], action: str) -> None:
+        self.faults = list(faults)
+        self.action = action
+        reason = ", ".join(self.faults) if self.faults else "unknown"
+        super().__init__(f"safety fault ({reason}); action={action}")
 
 
 class MissionManager(Node):
@@ -63,6 +74,11 @@ class MissionManager(Node):
         self.declare_parameter("obstacle_data_timeout_s", 1.0)
         self.declare_parameter("path_clearance_cone_deg", 30.0)
         self.declare_parameter("path_obstacle_threshold_m", 4.0)
+        self.declare_parameter("safety_topic", "/aeris/safety/status")
+        self.declare_parameter("safety_timeout_s", 2.0)
+        self._safety_timeout_s = float(
+            self.get_parameter("safety_timeout_s").value
+        )
 
         self._lock = threading.RLock()
         self._state = "IDLE"
@@ -76,6 +92,8 @@ class MissionManager(Node):
         self._latest_detection_time = 0.0
         self._latest_obstacle: ObstacleArray | None = None
         self._latest_obstacle_time = 0.0
+        self._latest_safety: SafetyStatus | None = None
+        self._latest_safety_time = 0.0
         self._mission: Mission | None = None
         self._mission_error = ""
         self._run_dir: Path | None = None
@@ -155,6 +173,12 @@ class MissionManager(Node):
             ObstacleArray,
             str(self.get_parameter("obstacle_topic").value),
             self._on_obstacles,
+            10,
+        )
+        self._safety_sub = self.create_subscription(
+            SafetyStatus,
+            str(self.get_parameter("safety_topic").value),
+            self._on_safety_status,
             10,
         )
         self._status_pub = self.create_publisher(
@@ -239,6 +263,11 @@ class MissionManager(Node):
             self._latest_obstacle = msg
             self._latest_obstacle_time = time.monotonic()
 
+    def _on_safety_status(self, msg: SafetyStatus) -> None:
+        with self._lock:
+            self._latest_safety = msg
+            self._latest_safety_time = time.monotonic()
+
     def _publish_status(self) -> None:
         msg = MissionStatus()
         msg.stamp = self.get_clock().now().to_msg()
@@ -271,6 +300,9 @@ class MissionManager(Node):
 
         try:
             self._execute_mission(mission, deadline)
+        except SafetyAbort as exc:
+            self.get_logger().error(f"Safety abort: {exc}")
+            self._handle_safety_abort(exc)
         except Exception as exc:  # noqa: BLE001 - mission thread reports all failures
             self.get_logger().error(f"Mission failed: {exc}")
             self._abort_mission(mission, str(exc))
@@ -576,6 +608,22 @@ class MissionManager(Node):
             angle += 2.0 * math.pi
         return angle
 
+    def _handle_safety_abort(self, exc: SafetyAbort) -> None:
+        with self._lock:
+            self._state = "ABORTED"
+            self._success = False
+            self._message = str(exc)
+            self._current_waypoint = ""
+        self._log(
+            "safety_abort",
+            faults=exc.faults,
+            action=exc.action,
+            reason=str(exc),
+        )
+        # The safety supervisor owns the safe action (RTL/land/hold). Do not
+        # call the offboard abort service here, or a landing command would
+        # override a return-to-launch decision.
+
     def _abort_mission(self, mission: Mission, reason: str) -> None:
         with self._lock:
             self._state = "ABORTED"
@@ -643,6 +691,21 @@ class MissionManager(Node):
             raise RuntimeError("mission abort requested")
         if time.monotonic() > mission_deadline:
             raise TimeoutError("mission timeout exceeded")
+
+        with self._lock:
+            safety = self._latest_safety
+            safety_time = self._latest_safety_time
+
+        if safety is not None:
+            # Ignore pre-arm safety faults: the vehicle cannot be in flight
+            # yet, and the supervisor may still be warming up its DDS links.
+            if not safety.safe and safety.armed:
+                raise SafetyAbort(safety.active_faults, safety.action)
+            if (
+                time.monotonic() - safety_time
+                > self._safety_timeout_s
+            ):
+                raise RuntimeError("safety supervisor heartbeat lost")
 
     def _open_run_log(self, mission: Mission) -> None:
         log_dir = Path(str(self.get_parameter("log_dir").value))

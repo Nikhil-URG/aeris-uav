@@ -1,0 +1,5 @@
+[safety_node-1] [INFO] [1794261138.492730745] [aeris_safety]: AERIS safety initialized: status='/aeris/safety/status', pose_timeout=1.0 s, battery_min=0.25, geofence=20.0 m, heartbeat_timeout=3.0 s.
+[safety_node-1] [INFO] [1794261138.492896356] [aeris_safety]: Services: aeris_safety/inject_fault, aeris_safety/clear_faults
+[safety_node-1] [WARN] [1794261156.449998800] [aeris_safety]: Fault injection: fault='geofence_breach' enable=true
+[safety_node-1] [ERROR] [1794261156.493522094] [aeris_safety]: SAFETY ACTION 'rtl' for fault 'geofence_breach' (1 active fault(s)).
+[safety_node-1] [INFO] [1794261156.494103194] [aeris_safety]: Safety action 'rtl' accepted: return-to-launch requested

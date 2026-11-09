@@ -1,0 +1,5 @@
+[safety_node-1] [INFO] [1794260714.836980361] [aeris_safety]: AERIS safety initialized: status='/aeris/safety/status', pose_timeout=1.0 s, battery_min=0.25, geofence=20.0 m, heartbeat_timeout=3.0 s.
+[safety_node-1] [INFO] [1794260714.837123931] [aeris_safety]: Services: aeris_safety/inject_fault, aeris_safety/clear_faults
+[safety_node-1] [WARN] [1794260733.639133231] [aeris_safety]: Fault injection: fault='stale_pose' enable=true
+[safety_node-1] [ERROR] [1794260733.737420227] [aeris_safety]: SAFETY ACTION 'land' for fault 'stale_pose' (1 active fault(s)).
+[safety_node-1] [INFO] [1794260733.738637705] [aeris_safety]: Safety action 'land' accepted: landing requested
