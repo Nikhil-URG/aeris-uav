@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 2 complete — offboard arm, takeoff to 5 m, position hold and landing verified in SITL. Week 3 mission manager is next.
+**Current status:** Week 3 complete — mission manager, two-waypoint inspection, RTL and landing verified in SITL. Week 4 perception is next.
 
 ## Mission
 
@@ -79,13 +79,17 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── checkpoint.md
 │   └── experiments/
 │       ├── development_log.md
-│       └── week2_offboard_run.log
+│       ├── week2_offboard_run.log
+│       ├── week3_mission.jsonl
+│       └── week3_mission_run.log
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
 ├── ros2_ws/
 │   └── src/
 │       ├── px4_msgs/            # Git submodule (PX4 v1.17.0 messages)
+│       ├── aeris_interfaces/    # AERIS messages and services
 │       ├── aeris_flight_control/
+│       ├── aeris_mission_manager/
 │       └── aeris_bringup/
 ├── simulation/
 │   ├── worlds/
@@ -184,6 +188,25 @@ ros2 service call /aeris_offboard_controller/abort std_srvs/srv/Trigger
 
 Do not interact with QGC during an automated run unless you intend to exercise the external-land/abort path. Flight evidence is in [docs/experiments/week2_offboard_run.log](docs/experiments/week2_offboard_run.log).
 
+## Full mission demo
+
+The mission launch starts telemetry, the offboard controller and the Python mission manager:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup mission.launch.py
+```
+
+In another terminal:
+
+```bash
+ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
+```
+
+The default mission (`inspection_alpha`) takes off, visits two inspection waypoints, holds at each, returns to launch and lands. Each run writes a structured event log to `results/logs/<run_id>/mission.jsonl`.
+
+Mission evidence: [docs/experiments/week3_mission.jsonl](docs/experiments/week3_mission.jsonl).
+
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
 ## Resuming the project
@@ -206,7 +229,7 @@ The environment script is required because this machine has Miniforge first in `
 |---|---|---|
 | 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Complete |
 | 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Complete |
-| 3 | Mission manager: state machine, waypoints, validation, logging | Planned |
+| 3 | Mission manager: state machine, waypoints, validation, logging | Complete |
 | 4 | Perception: camera, OpenCV, target detection and localization | Planned |
 | 5 | Navigation: depth camera, obstacle detection, local replanning | Planned |
 | 6 | Safety: fault injection, failsafes, RTL, automated tests | Planned |

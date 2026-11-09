@@ -221,6 +221,31 @@ ros2 service call /aeris_offboard_controller/abort std_srvs/srv/Trigger
 
 Expected state sequence: `WAIT_FOR_READY → PRESTREAM → REQUEST_OFFBOARD → ARM → TAKEOFF → HOLD → LAND → DONE`.
 
+### Full mission demo
+
+With PX4, Gazebo and QGC running:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup mission.launch.py
+```
+
+In another terminal:
+
+```bash
+ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
+```
+
+The default `inspection_alpha` mission takes off, visits two inspection waypoints, holds at each, returns to launch and lands. The structured event log is written to `results/logs/<run_id>/mission.jsonl`.
+
+Abort:
+
+```bash
+ros2 service call /aeris_mission_manager/abort std_srvs/srv/Trigger
+```
+
+Do not run `offboard.launch.py` and `mission.launch.py` simultaneously; both start an offboard controller with the same node name.
+
 ## 6. QGroundControl (optional but recommended)
 
 ```bash
@@ -362,6 +387,17 @@ Confirm `python3 --version` is 3.12 before the PX4 setup step. If PX4's build ca
   ```
 
 - Force X11: the `scripts/run_qgroundcontrol.sh` wrapper already sets `QT_QPA_PLATFORM=xcb`.
+
+### Perception packages for Week 4
+
+The Gazebo camera bridge is not part of the base install. Install it before running the perception stack:
+
+```bash
+sudo apt update
+sudo apt install -y ros-jazzy-ros-gz ros-jazzy-vision-msgs
+```
+
+`cv_bridge`, `image_transport` and OpenCV development files are already installed with the ROS 2 desktop/PX4 setup.
 
 ### PX4 log grows rapidly
 

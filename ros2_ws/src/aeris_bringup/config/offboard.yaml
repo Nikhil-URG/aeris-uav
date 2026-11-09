@@ -8,6 +8,8 @@ aeris_offboard_controller:
 
     takeoff_altitude_m: 5.0
     hold_duration_s: 10.0
+    # Standalone demo: land after the hold. Mission-manager config disables this.
+    auto_land_after_hold: true
 
     # PX4's offboard-loss timeout is 1.0 s by default (COM_OF_LOSS_T).
     # 20 Hz gives a large margin.

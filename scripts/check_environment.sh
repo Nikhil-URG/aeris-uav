@@ -112,6 +112,18 @@ if command -v ros2 >/dev/null 2>&1; then
   else
     warn "offboard_controller executable missing; rebuild the workspace"
   fi
+
+  if ros2 pkg list 2>/dev/null | grep -q '^aeris_interfaces$'; then
+    ok "aeris_interfaces is discoverable"
+  else
+    warn "aeris_interfaces not discoverable; rebuild the workspace"
+  fi
+
+  if ros2 pkg executables aeris_mission_manager 2>/dev/null | grep -q 'mission_manager'; then
+    ok "mission_manager executable available"
+  else
+    warn "mission_manager executable missing; rebuild the workspace"
+  fi
 fi
 
 section "Ground control"

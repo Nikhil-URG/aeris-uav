@@ -96,6 +96,8 @@ Configuration lives in `ros2_ws/src/aeris_bringup/config/offboard.yaml`.
 | Service | Type | Purpose |
 |---|---|---|
 | `~/start` | `std_srvs/srv/Trigger` | Start after readiness checks pass |
+| `~/go_to` | `aeris_interfaces/srv/GoTo` | Fly to an NED target and hold |
+| `~/land` | `std_srvs/srv/Trigger` | Land at the current position |
 | `~/abort` | `std_srvs/srv/Trigger` | Abort and land at the current position |
 
 ### State machine
@@ -106,7 +108,9 @@ WAIT_FOR_READY
   -> REQUEST_OFFBOARD     (DO_SET_MODE, custom main mode 6)
   -> ARM                  (ARM_DISARM, param1=1)
   -> TAKEOFF              (ramp z from current to -5.0 NED)
-  -> HOLD                 (10 s position hold)
+  -> HOLD                 (wait for a goal, land, or standalone auto-land)
+  -> TRANSIT              (go_to target; new goals update in flight)
+  -> HOLD                 (goal reached, or goal timeout)
   -> LAND                 (NAV_LAND at current position)
   -> DONE                 (disarmed; restore AUTO_LOITER)
 
@@ -125,6 +129,18 @@ Any fault -> ABORT_LAND   (send NAV_LAND, keep signal briefly)
 | Publish | `/fmu/in/offboard_control_mode` | Position-control heartbeat |
 | Publish | `/fmu/in/trajectory_setpoint` | Position + yaw setpoint (NED) |
 | Publish | `/fmu/in/vehicle_command` | Mode, arm, land commands |
+| Publish | `/aeris_offboard_controller/flight_status` | `aeris_interfaces/msg/FlightStatus` at 10 Hz |
+
+### Mission interface (Week 3)
+
+The mission manager never publishes PX4 topics. It calls the offboard controller:
+
+- `GoTo` carries a target in local NED, tolerance and timeout. The controller assigns a monotonically increasing **goal sequence** and reports it in `FlightStatus`, eliminating stale `goal_reached` races.
+- `FlightStatus` reports controller state, armed/offboard flags, current and target position, position error and goal status.
+- `auto_land_after_hold` is `true` for the standalone Week 2 demo and `false` for `mission.launch.py`; the mission manager owns the landing decision.
+- `offboard_mission.yaml` is the mission-mode config.
+
+The Python mission manager loads and validates a YAML mission, calls `start`, sequences `go_to` for each waypoint, waits for each exact goal sequence, holds for the inspection time, performs RTL, calls `land`, and writes a JSONL event log.
 
 ### Safety checks
 
@@ -153,6 +169,18 @@ Clean final run (`docs/experiments/week2_offboard_run.log`):
 
 An abort-path test was also performed: an external QGC land command arrived during HOLD, the controller detected the loss of offboard mode, sent its own `NAV_LAND`, stopped the stream and the vehicle landed and disarmed safely.
 
+Week 3 two-waypoint mission (`docs/experiments/week3_mission.jsonl`):
+
+| Metric | Result |
+|---|---|
+| Waypoints | 2/2 completed |
+| `wp_01` / `wp_02` transit | 2.08 s / 2.03 s |
+| Inspection holds | 3 s each |
+| RTL transit | 2.18 s |
+| Landing to complete | 11.2 s |
+| Total mission | ~33.8 s |
+| Final state | `COMPLETE`, success, disarmed, `AUTO_LOITER` |
+
 ### Operational notes
 
 - Setpoint stream: 20 Hz. PX4's `COM_OF_LOSS_T` default is 1.0 s, so the margin is large.
@@ -164,7 +192,8 @@ An abort-path test was also performed: an external QGC land command arrived duri
 ### Limitations
 
 - No automated offboard integration test yet; fault injection and scripted abort tests are planned for Week 6.
-- The mission is a single takeoff/hold/land script. Waypoints and mission validation arrive with the Week 3 mission manager.
+- Mission speed limits are validated but not yet enforced by the controller; PX4's position controller handles the trajectory.
+- Perception at inspection waypoints is not integrated yet (Week 4).
 
 ## 4. Safety rules
 

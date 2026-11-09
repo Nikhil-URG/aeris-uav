@@ -23,6 +23,10 @@ setup(
             os.path.join("share", package_name, "config"),
             glob("config/*.yaml"),
         ),
+        (
+            os.path.join("share", package_name, "config", "missions"),
+            glob("config/missions/*.yaml"),
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

@@ -6,6 +6,8 @@
 #include <memory>
 #include <string>
 
+#include "aeris_interfaces/msg/flight_status.hpp"
+#include "aeris_interfaces/srv/go_to.hpp"
 #include "px4_msgs/msg/offboard_control_mode.hpp"
 #include "px4_msgs/msg/trajectory_setpoint.hpp"
 #include "px4_msgs/msg/vehicle_command.hpp"
@@ -40,6 +42,7 @@ public:
     start_delay_s_ = this->declare_parameter<double>("start_delay_s", 5.0);
     takeoff_altitude_m_ = this->declare_parameter<double>("takeoff_altitude_m", 5.0);
     hold_duration_s_ = this->declare_parameter<double>("hold_duration_s", 10.0);
+    auto_land_after_hold_ = this->declare_parameter<bool>("auto_land_after_hold", true);
     setpoint_rate_hz_ = this->declare_parameter<double>("setpoint_rate_hz", 20.0);
     prestream_duration_s_ = this->declare_parameter<double>("prestream_duration_s", 2.0);
     mode_timeout_s_ = this->declare_parameter<double>("mode_timeout_s", 10.0);
@@ -113,6 +116,20 @@ public:
       std::bind(&OffboardController::abort_callback, this,
         std::placeholders::_1, std::placeholders::_2));
 
+    go_to_service_ = this->create_service<aeris_interfaces::srv::GoTo>(
+      "~/go_to",
+      std::bind(&OffboardController::go_to_callback, this,
+        std::placeholders::_1, std::placeholders::_2));
+
+    land_service_ = this->create_service<std_srvs::srv::Trigger>(
+      "~/land",
+      std::bind(&OffboardController::land_callback, this,
+        std::placeholders::_1, std::placeholders::_2));
+
+    flight_status_pub_ =
+      this->create_publisher<aeris_interfaces::msg::FlightStatus>(
+        "/aeris_offboard_controller/flight_status", 10);
+
     node_start_time_ = std::chrono::steady_clock::now();
     state_enter_time_ = node_start_time_;
     last_ramp_time_ = node_start_time_;
@@ -125,13 +142,17 @@ public:
       100ms, std::bind(&OffboardController::state_timer_callback, this));
     heartbeat_timer_ = this->create_wall_timer(
       500ms, std::bind(&OffboardController::heartbeat_timer_callback, this));
+    status_timer_ = this->create_wall_timer(
+      100ms, std::bind(&OffboardController::publish_flight_status, this));
 
     RCLCPP_INFO(
       get_logger(),
       "AERIS offboard controller initialized: auto_start=%s, takeoff=%.1f m, "
-      "setpoint_rate=%.1f Hz, prestream=%.1f s, hold=%.1f s.",
+      "setpoint_rate=%.1f Hz, prestream=%.1f s, hold=%.1f s, "
+      "auto_land_after_hold=%s.",
       auto_start_ ? "true" : "false", takeoff_altitude_m_, setpoint_rate_hz_,
-      prestream_duration_s_, hold_duration_s_);
+      prestream_duration_s_, hold_duration_s_,
+      auto_land_after_hold_ ? "true" : "false");
 
     if (auto_start_) {
       RCLCPP_WARN(
@@ -142,8 +163,8 @@ public:
 
     RCLCPP_INFO(
       get_logger(),
-      "Services: %s/start, %s/abort",
-      get_name(), get_name());
+      "Services: %s/start, %s/go_to, %s/land, %s/abort",
+      get_name(), get_name(), get_name(), get_name());
   }
 
 private:
@@ -155,6 +176,7 @@ private:
     ARM,
     TAKEOFF,
     HOLD,
+    TRANSIT,
     LAND,
     ABORT_LAND,
     DONE,
@@ -170,6 +192,7 @@ private:
       case State::ARM: return "ARM";
       case State::TAKEOFF: return "TAKEOFF";
       case State::HOLD: return "HOLD";
+      case State::TRANSIT: return "TRANSIT";
       case State::LAND: return "LAND";
       case State::ABORT_LAND: return "ABORT_LAND";
       case State::DONE: return "DONE";
@@ -271,6 +294,102 @@ private:
     response->message = "abort requested";
   }
 
+  void go_to_callback(
+    const std::shared_ptr<aeris_interfaces::srv::GoTo::Request> request,
+    std::shared_ptr<aeris_interfaces::srv::GoTo::Response> response)
+  {
+    if (state_ != State::HOLD && state_ != State::TRANSIT) {
+      response->accepted = false;
+      response->message = std::string("go_to rejected in state ") + state_name(state_);
+      return;
+    }
+
+    if (!have_status_ ||
+      status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED ||
+      !have_control_mode_ || !control_mode_.flag_control_offboard_enabled)
+    {
+      response->accepted = false;
+      response->message = "go_to rejected: vehicle is not armed in offboard mode";
+      return;
+    }
+
+    if (!std::isfinite(request->x) || !std::isfinite(request->y) ||
+      !std::isfinite(request->z))
+    {
+      response->accepted = false;
+      response->message = "go_to rejected: target is not finite";
+      return;
+    }
+
+    if (request->z > 0.0 || -request->z > max_altitude_m_) {
+      response->accepted = false;
+      response->message = "go_to rejected: target altitude outside limits";
+      return;
+    }
+
+    const double horizontal =
+      std::hypot(request->x - start_x_, request->y - start_y_);
+    if (horizontal > max_horizontal_distance_m_) {
+      response->accepted = false;
+      response->message = "go_to rejected: target outside horizontal limit";
+      return;
+    }
+
+    goal_x_ = request->x;
+    goal_y_ = request->y;
+    goal_z_ = request->z;
+    goal_yaw_ = std::isfinite(request->yaw) ? request->yaw : target_yaw_;
+    goal_tolerance_m_ = std::clamp(request->tolerance_m, 0.1, 2.0);
+    goal_timeout_s_ = std::clamp(request->timeout_s, 1.0, 120.0);
+    goal_start_time_ = std::chrono::steady_clock::now();
+    ++goal_sequence_;
+    goal_active_ = true;
+    goal_reached_ = false;
+    goal_failed_ = false;
+
+    target_x_ = goal_x_;
+    target_y_ = goal_y_;
+    target_z_ = goal_z_;
+    target_yaw_ = goal_yaw_;
+    target_initialized_ = true;
+
+    if (state_ == State::HOLD) {
+      transition_to(State::TRANSIT, "goal accepted");
+    } else {
+      RCLCPP_INFO(
+        get_logger(),
+        "Goal updated in TRANSIT: NED (%.2f, %.2f, %.2f), tolerance=%.2f m.",
+        goal_x_, goal_y_, goal_z_, goal_tolerance_m_);
+    }
+
+    response->accepted = true;
+    response->message = "goal accepted";
+    response->sequence = goal_sequence_;
+  }
+
+  void land_callback(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    if (state_ != State::HOLD && state_ != State::TRANSIT) {
+      response->success = false;
+      response->message = std::string("land rejected in state ") + state_name(state_);
+      return;
+    }
+
+    if (!have_status_ ||
+      status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED)
+    {
+      response->success = false;
+      response->message = "land rejected: vehicle is not armed";
+      return;
+    }
+
+    land_requested_ = true;
+    response->success = true;
+    response->message = "landing requested";
+  }
+
   // -----------------------------------------------------------------------
   // Timers
   // -----------------------------------------------------------------------
@@ -295,6 +414,31 @@ private:
     }
 
     publish_offboard_control_mode();
+  }
+
+  void publish_flight_status()
+  {
+    aeris_interfaces::msg::FlightStatus msg{};
+    msg.stamp = this->now();
+    msg.state = state_name(state_);
+    msg.armed = have_status_ &&
+      status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED;
+    msg.offboard = have_control_mode_ &&
+      control_mode_.flag_control_offboard_enabled;
+    msg.goal_sequence = goal_sequence_;
+    msg.goal_active = goal_active_;
+    msg.goal_reached = goal_reached_;
+    msg.goal_failed = goal_failed_;
+    msg.x = position_.x;
+    msg.y = position_.y;
+    msg.z = position_.z;
+    msg.yaw = position_.heading;
+    msg.target_x = target_x_;
+    msg.target_y = target_y_;
+    msg.target_z = target_z_;
+    msg.position_error = target_initialized_ ? position_error_from_target() : 0.0;
+    msg.altitude_m = -position_.z;
+    flight_status_pub_->publish(msg);
   }
 
   void state_timer_callback()
@@ -351,6 +495,9 @@ private:
         break;
       case State::HOLD:
         handle_hold(now);
+        break;
+      case State::TRANSIT:
+        handle_transit(now);
         break;
       case State::LAND:
         handle_land(now);
@@ -483,6 +630,13 @@ private:
 
   void handle_hold(const std::chrono::steady_clock::time_point & /*now*/)
   {
+    if (land_requested_) {
+      land_requested_ = false;
+      transition_to(State::LAND, "land requested");
+      send_land_command();
+      return;
+    }
+
     if (status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED) {
       abort_mission("vehicle disarmed during hold");
       return;
@@ -520,15 +674,73 @@ private:
       hold_error_active_ = false;
     }
 
-    if (elapsed_in_state_s() >= hold_duration_s_) {
+    if (auto_land_after_hold_ && elapsed_in_state_s() >= hold_duration_s_) {
       transition_to(State::LAND, "hold complete");
       send_land_command();
+    }
+  }
+
+  void handle_transit(const std::chrono::steady_clock::time_point & now)
+  {
+    if (land_requested_) {
+      land_requested_ = false;
+      transition_to(State::LAND, "land requested");
+      send_land_command();
+      return;
+    }
+
+    if (status_.arming_state != px4_msgs::msg::VehicleStatus::ARMING_STATE_ARMED) {
+      abort_mission("vehicle disarmed during transit");
+      return;
+    }
+
+    if (!control_mode_.flag_control_offboard_enabled) {
+      if (status_.nav_state == px4_msgs::msg::VehicleStatus::NAVIGATION_STATE_AUTO_LAND) {
+        streaming_ = false;
+        transition_to(State::LAND, "external AUTO_LAND detected");
+        return;
+      }
+
+      abort_mission("lost offboard mode during transit");
+      return;
+    }
+
+    if (horizontal_distance_from_start() > max_horizontal_distance_m_) {
+      abort_mission("horizontal safety limit exceeded during transit");
+      return;
+    }
+
+    const double error = position_error_from_target();
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "TRANSIT: position=(%.2f, %.2f, %.2f) target=(%.2f, %.2f, %.2f) error=%.2f m",
+      position_.x, position_.y, position_.z,
+      target_x_, target_y_, target_z_, error);
+
+    if (error <= goal_tolerance_m_) {
+      goal_active_ = false;
+      goal_reached_ = true;
+      goal_failed_ = false;
+      transition_to(State::HOLD, "waypoint reached");
+      return;
+    }
+
+    if (age_s(goal_start_time_, now) > goal_timeout_s_) {
+      goal_active_ = false;
+      goal_reached_ = false;
+      goal_failed_ = true;
+      RCLCPP_WARN(
+        get_logger(),
+        "Waypoint timeout after %.1f s (error=%.2f m, tolerance=%.2f m).",
+        goal_timeout_s_, error, goal_tolerance_m_);
+      transition_to(State::HOLD, "waypoint timeout");
     }
   }
 
   void handle_land(const std::chrono::steady_clock::time_point & now)
   {
     if (status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED) {
+      goal_active_ = false;
       send_auto_loiter_mode_command();
       streaming_ = false;
       transition_to(State::DONE, "landed and disarmed");
@@ -570,6 +782,7 @@ private:
   void handle_abort_land(const std::chrono::steady_clock::time_point & now)
   {
     if (status_.arming_state == px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED) {
+      goal_active_ = false;
       send_auto_loiter_mode_command();
       streaming_ = false;
       transition_to(State::ABORTED, "aborted and disarmed");
@@ -609,6 +822,11 @@ private:
     target_z_ = start_z_;
     target_yaw_ = start_yaw_;
     target_initialized_ = true;
+
+    goal_active_ = false;
+    goal_reached_ = false;
+    goal_failed_ = false;
+    land_requested_ = false;
 
     streaming_ = true;
     hold_error_active_ = false;
@@ -854,6 +1072,7 @@ private:
   // Parameters
   // -----------------------------------------------------------------------
   bool auto_start_{false};
+  bool auto_land_after_hold_{true};
   double start_delay_s_{5.0};
   double takeoff_altitude_m_{5.0};
   double hold_duration_s_{10.0};
@@ -907,6 +1126,19 @@ private:
   double target_z_{0.0};
   double target_yaw_{0.0};
 
+  double goal_x_{0.0};
+  double goal_y_{0.0};
+  double goal_z_{0.0};
+  double goal_yaw_{0.0};
+  double goal_tolerance_m_{0.4};
+  double goal_timeout_s_{60.0};
+  uint32_t goal_sequence_{0};
+  bool goal_active_{false};
+  bool goal_reached_{false};
+  bool goal_failed_{false};
+  bool land_requested_{false};
+  std::chrono::steady_clock::time_point goal_start_time_;
+
   // -----------------------------------------------------------------------
   // ROS interfaces
   // -----------------------------------------------------------------------
@@ -918,13 +1150,17 @@ private:
   rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_pub_;
   rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_pub_;
   rclcpp::Publisher<px4_msgs::msg::VehicleCommand>::SharedPtr vehicle_command_pub_;
+  rclcpp::Publisher<aeris_interfaces::msg::FlightStatus>::SharedPtr flight_status_pub_;
 
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr start_service_;
   rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr abort_service_;
+  rclcpp::Service<aeris_interfaces::srv::GoTo>::SharedPtr go_to_service_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr land_service_;
 
   rclcpp::TimerBase::SharedPtr setpoint_timer_;
   rclcpp::TimerBase::SharedPtr state_timer_;
   rclcpp::TimerBase::SharedPtr heartbeat_timer_;
+  rclcpp::TimerBase::SharedPtr status_timer_;
 };
 
 int main(int argc, char * argv[])

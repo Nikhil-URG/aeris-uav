@@ -14,6 +14,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(aeris_interfaces REQUIRED)
 
 add_executable(telemetry_monitor
   src/telemetry_monitor.cpp
@@ -36,6 +37,7 @@ ament_target_dependencies(offboard_controller
   rclcpp
   px4_msgs
   std_srvs
+  aeris_interfaces
 )
 
 install(TARGETS

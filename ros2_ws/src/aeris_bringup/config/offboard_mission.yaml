@@ -1,0 +1,26 @@
+aeris_offboard_controller:
+  ros__parameters:
+    auto_start: false
+    auto_start_delay_s: 5.0
+    start_delay_s: 5.0
+
+    takeoff_altitude_m: 5.0
+    hold_duration_s: 10.0
+    # Mission manager owns the sequence; do not auto-land after a hold.
+    auto_land_after_hold: false
+
+    setpoint_rate_hz: 20.0
+    prestream_duration_s: 2.0
+
+    mode_timeout_s: 10.0
+    arm_timeout_s: 10.0
+    takeoff_timeout_s: 30.0
+    land_timeout_s: 45.0
+
+    position_tolerance_m: 0.3
+    takeoff_speed_mps: 1.0
+    max_altitude_m: 10.0
+    max_horizontal_distance_m: 20.0
+    max_hold_error_m: 1.0
+    telemetry_timeout_s: 1.0
+    abort_grace_s: 2.0

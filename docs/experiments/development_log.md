@@ -293,6 +293,84 @@ During a separate run, an external QGC land command arrived while the controller
 
 ---
 
+## 2026-11-09 — Week 3: mission manager and two-waypoint inspection mission
+
+### Goal
+
+Add a mission layer that owns inspection goals and state, while `aeris_flight_control` remains the only component that commands PX4.
+
+### Implemented
+
+- `aeris_interfaces`:
+  - `msg/FlightStatus`
+  - `msg/MissionStatus`
+  - `srv/GoTo` (NED target, tolerance, timeout, goal sequence)
+- `aeris_flight_control` extensions:
+  - `TRANSIT` state and `~/go_to` service;
+  - `~/land` service;
+  - `FlightStatus` publisher at 10 Hz;
+  - goal sequence numbers to eliminate stale `goal_reached` races;
+  - `auto_land_after_hold` parameter (true for the manual demo, false for missions).
+- `aeris_mission_manager` Python package:
+  - mission YAML parser and validator;
+  - mission state machine (`PREFLIGHT → TAKEOFF → TRANSIT → INSPECT → … → LAND → COMPLETE`);
+  - sequential waypoint execution, RTL, landing and abort;
+  - JSONL event log per run;
+  - `MissionStatus` publisher;
+  - `~/start` and `~/abort` services.
+- `aeris_bringup`:
+  - `mission.launch.py` (telemetry + offboard + mission manager);
+  - `offboard_mission.yaml`;
+  - `config/missions/inspection_alpha.yaml`.
+
+### Mission result — `inspection_alpha`
+
+Artifacts:
+
+- `docs/experiments/week3_mission.jsonl`
+- `docs/experiments/week3_mission_run.log`
+
+| Metric | Result |
+|---|---|
+| Waypoints | 2 (`wp_01`, `wp_02`) |
+| Takeoff to HOLD | 10.3 s after mission start |
+| `wp_01` transit | 2.08 s |
+| `wp_02` transit | 2.03 s |
+| Inspection holds | 3 s each |
+| RTL transit | 2.18 s |
+| Landing to complete | 11.2 s |
+| Total mission | ~33.8 s |
+| Final state | `COMPLETE`, `success=true`, 2/2 waypoints |
+| Vehicle | disarmed, `AUTO_LOITER`, preflight checks passing |
+
+The JSONL log records `mission_loaded`, `mission_start`, every state transition, every waypoint transit/reach/inspection, RTL and `mission_complete`.
+
+### Tests
+
+```text
+colcon test --packages-select aeris_mission_manager
+11 passed, 0 errors, 0 failures
+```
+
+Validation covers duplicate IDs, frame, altitude, geofence, actions, hold times and missing files.
+
+### Issues and fixes
+
+1. **Stale `goal_reached` latch.** The mission manager could mistake the previous waypoint's `goal_reached` for the new goal.
+   - Fix: add a monotonically increasing `goal_sequence` to `GoTo` responses and `FlightStatus`; the mission manager waits for the exact sequence.
+
+2. **Offboard controller auto-landed after HOLD.** The Week 2 demo behavior was wrong for multi-waypoint missions.
+   - Fix: `auto_land_after_hold` parameter; `offboard_mission.yaml` disables it and the mission manager owns the landing decision.
+
+3. **Mission manager service calls from a thread.** Service futures are completed by the main rclpy executor while the mission thread waits.
+   - The mission thread never calls `spin_until_future_complete`; it polls futures while the main thread spins.
+
+### Next
+
+Week 4: camera integration, OpenCV target detection and target localization. This requires the Gazebo–ROS image bridge (`ros-jazzy-ros-gz`), which is not installed yet.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

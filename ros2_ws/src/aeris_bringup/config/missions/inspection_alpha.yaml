@@ -1,0 +1,34 @@
+mission:
+  name: inspection_alpha
+  frame: local_ned
+
+  home:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+
+  defaults:
+    cruise_altitude_m: 5.0
+    max_speed_mps: 1.5
+    waypoint_tolerance_m: 0.4
+    mission_timeout_s: 180.0
+
+  waypoints:
+    - id: wp_01
+      x: 4.0
+      y: 0.0
+      z: -5.0
+      hold_s: 3.0
+      action: inspect
+      target_id: valve_a
+
+    - id: wp_02
+      x: 4.0
+      y: 4.0
+      z: -5.0
+      hold_s: 3.0
+      action: inspect
+      target_id: gauge_b
+
+  return_to_launch: true
+  land_on_complete: true
