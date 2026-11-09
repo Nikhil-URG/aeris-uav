@@ -19,7 +19,7 @@ The first executable is `aeris_telemetry_monitor`. It subscribes to PX4's local 
 | Node name | `aeris_telemetry_monitor` |
 | Executable | `telemetry_monitor` |
 | Package | `aeris_flight_control` |
-| Topic | `/fmu/out/vehicle_local_position` |
+| Topic | `/fmu/out/vehicle_local_position_v1` |
 | Message | `px4_msgs/msg/VehicleLocalPosition` |
 | QoS | best effort, keep last 10 |
 
@@ -27,11 +27,13 @@ The first executable is `aeris_telemetry_monitor`. It subscribes to PX4's local 
 
 | Parameter | Default | Meaning |
 |---|---|---|
-| `position_topic` | `/fmu/out/vehicle_local_position` | PX4 local position topic |
+| `position_topic` | `/fmu/out/vehicle_local_position_v1` | PX4 local position topic |
 | `log_every_n` | `50` | Print one line per N messages |
 | `moving_speed_threshold` | `0.1` | Speed threshold in m/s for `Moving=YES` |
 
 The defaults live in `ros2_ws/src/aeris_bringup/config/telemetry.yaml`; the launch file passes them to the node.
+
+> **PX4 v1.17 topic suffix:** versioned DDS messages carry a `_v1` suffix. The local position publisher is `/fmu/out/vehicle_local_position_v1`, not the unsuffixed name used in early examples. The unsuffixed name can still appear in the ROS graph if a subscriber creates it, but it has no publisher. Always confirm the active name with `ros2 topic list` after starting SITL.
 
 ### Run
 
@@ -49,7 +51,7 @@ ros2 run aeris_flight_control telemetry_monitor --ros-args -p log_every_n:=50
 ### Expected output
 
 ```text
-[aeris_telemetry_monitor]: AERIS telemetry monitor initialized (topic='/fmu/out/vehicle_local_position', log_every_n=50).
+[aeris_telemetry_monitor]: AERIS telemetry monitor initialized (topic='/fmu/out/vehicle_local_position_v1', log_every_n=50).
 [aeris_telemetry_monitor]: Position [NED] X=0.02 Y=-0.01 Z=-0.04 | Velocity [NED] VX=0.00 VY=0.01 VZ=0.00 | Speed=0.01 m/s | PosValid=YES VelValid=YES | Moving=NO
 ```
 

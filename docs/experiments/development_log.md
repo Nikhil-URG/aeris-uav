@@ -90,20 +90,26 @@ git ls-remote --tags https://github.com/PX4/px4_msgs.git refs/tags/v1.17.0
 - Build the workspace and run the first telemetry session.
 - Record the Milestone 1 acceptance results below.
 
-### Milestone 1 run (to be filled after the first successful session)
+### Milestone 1 run — completed 2026-11-09
 
 | Check | Result | Evidence |
 |---|---|---|
-| PX4 SITL boots | pending | |
-| Gazebo shows X500 | pending | |
-| QGC connects | pending | |
-| DDS agent connects | pending | |
-| `/fmu/*` topics visible | pending | |
-| `telemetry_monitor` builds | pending | |
-| Position telemetry continuous | pending | |
-| Estimator validity | pending | |
+| PX4 SITL boots | PASS | `pxh>` prompt; `INFO [init] Gazebo world is ready` |
+| Gazebo shows X500 | HEADLESS PASS | Headless world initialized; GUI verification pending due to NVML mismatch |
+| QGroundControl connects | PENDING | AppImage launches with `xcb`; MAVLink connection not yet visually verified |
+| DDS agent connects | PASS | `/fmu/in/*` and `/fmu/out/*` topics present |
+| ROS 2 topics | PASS | `/fmu/out/vehicle_local_position_v1`, `/fmu/out/vehicle_status_v1`, ... |
+| C++ telemetry node builds | PASS | `colcon build`: 3 packages finished |
+| Position telemetry continuous | PASS | 50.005 Hz on `/fmu/out/vehicle_local_position_v1` |
+| Estimator validity | PASS | `PosValid=YES VelValid=YES` at rest |
 
-Measured message rate: pending.
+Measured message rate: **50.005 Hz** on `/fmu/out/vehicle_local_position_v1` (min interval 0.016 s, max 0.024 s, std dev 0.0004 s).
+
+First telemetry output:
+
+```text
+[aeris_telemetry_monitor]: Position [NED] X=0.02 Y=-0.00 Z=0.03 | Velocity [NED] VX=0.00 VY=-0.00 VZ=-0.00 | Speed=0.00 m/s | PosValid=YES VelValid=YES | Moving=NO
+```
 
 ---
 
@@ -166,6 +172,20 @@ Finished <<< aeris_bringup [1.24s]
 Summary: 3 packages finished [4min 23s]
 ```
 
+### Finding — PX4 v1.17 uses versioned DDS topic names
+
+The brief and the initial node used `/fmu/out/vehicle_local_position`. In PX4 v1.17 the active publisher is `/fmu/out/vehicle_local_position_v1`, because the `px4_msgs` message declares `MESSAGE_VERSION = 1`. The unsuffixed topic appeared in the ROS graph only because the node had created a subscription to it; it had no publisher.
+
+Verified:
+
+```text
+$ ros2 topic info /fmu/out/vehicle_local_position_v1
+Type: px4_msgs/msg/VehicleLocalPosition
+Publisher count: 1
+```
+
+Updated the node default, `aeris_bringup/config/telemetry.yaml`, and the architecture/installation/flight-control docs. `claude.md` is left unchanged as the original brief. Other versioned topics (for example `vehicle_status_v1`) follow the same suffix convention; Week 2 offboard work must use the exact discovered topic names rather than assuming them.
+
 ### Observation — NVIDIA NVML driver/library mismatch
 
 `nvidia-smi` and `scripts/check_environment.sh` report:
@@ -176,11 +196,15 @@ Failed to initialize NVML: Driver/library version mismatch
 
 The userspace driver and the loaded kernel module are out of sync, likely after a package update. A reboot is probably required before GUI Gazebo can use the NVIDIA GPU. Headless simulation is the first validation path; the GUI will be rechecked after a reboot if needed.
 
+### QGroundControl smoke test
+
+The AppImage starts with `QT_QPA_PLATFORM=xcb`. It was stopped after a short smoke test before visual confirmation of the MAVLink connection; no connection evidence was captured from the console log. QGC visual verification remains pending and should be done after the NVIDIA reboot.
+
 ### Pending
 
-- Start `MicroXRCEAgent` + PX4 SITL headless.
-- Verify `/fmu/*` topics and run the telemetry monitor.
-- Record Milestone 1 acceptance results.
+- Reboot to resync the NVIDIA driver/library, then verify the Gazebo GUI shows the X500.
+- Launch QGC and visually confirm the MAVLink connection on UDP 14550.
+- Optionally record the first GUI run in this log.
 
 ---
 

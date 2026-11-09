@@ -184,7 +184,7 @@ ros2 launch aeris_bringup telemetry.launch.py
 Expected output (values are illustrative):
 
 ```text
-[aeris_telemetry_monitor]: AERIS telemetry monitor initialized (topic='/fmu/out/vehicle_local_position', log_every_n=50).
+[aeris_telemetry_monitor]: AERIS telemetry monitor initialized (topic='/fmu/out/vehicle_local_position_v1', log_every_n=50).
 [aeris_telemetry_monitor]: Position [NED] X=0.02 Y=-0.01 Z=-0.04 | Velocity [NED] VX=0.00 VY=0.01 VZ=0.00 | Speed=0.01 m/s | PosValid=YES VelValid=YES | Moving=NO
 ```
 
@@ -193,8 +193,10 @@ Check that PX4 topics are visible:
 ```bash
 source scripts/aeris_env.sh
 ros2 topic list | grep /fmu/
-ros2 topic hz /fmu/out/vehicle_local_position
+ros2 topic hz /fmu/out/vehicle_local_position_v1
 ```
+
+PX4 v1.17 appends `_v1` to versioned message topics. Use `/fmu/out/vehicle_local_position_v1`; the unsuffixed name may appear in the graph if a stale subscriber exists, but it has no publisher.
 
 ## 6. QGroundControl (optional but recommended)
 

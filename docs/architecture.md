@@ -96,14 +96,14 @@ Units:
 
 | Topic | Type | Direction | QoS | Purpose |
 |---|---|---|---|---|
-| `/fmu/out/vehicle_local_position` | `px4_msgs/msg/VehicleLocalPosition` | PX4 → ROS 2 | best effort | Local NED position, velocity, validity |
+| `/fmu/out/vehicle_local_position_v1` | `px4_msgs/msg/VehicleLocalPosition` | PX4 → ROS 2 | best effort | Local NED position, velocity, validity |
 | `/fmu/out/vehicle_status` | `px4_msgs/msg/VehicleStatus` | PX4 → ROS 2 | best effort | Arming, nav state, failsafes |
 | `/fmu/out/vehicle_attitude` | `px4_msgs/msg/VehicleAttitude` | PX4 → ROS 2 | best effort | Attitude quaternion |
 | `/fmu/in/offboard_control_mode` | `px4_msgs/msg/OffboardControlMode` | ROS 2 → PX4 | best effort | Offboard heartbeat/control selection |
 | `/fmu/in/trajectory_setpoint` | `px4_msgs/msg/TrajectorySetpoint` | ROS 2 → PX4 | best effort | Position/velocity setpoints (NED) |
 | `/fmu/in/vehicle_command` | `px4_msgs/msg/VehicleCommand` | ROS 2 → PX4 | best effort | Arm, mode, takeoff, land, RTL |
 
-The exact topic set is firmware-configuration dependent; it is verified with `ros2 topic list` during Milestone 1.
+PX4 v1.17 appends a `_v1` suffix to versioned DDS messages (for example `vehicle_local_position_v1` and `vehicle_status_v1`). The exact topic set is firmware-configuration dependent; it is verified with `ros2 topic list` during Milestone 1 and must not be assumed from older examples.
 
 ## 7. Package responsibilities
 

@@ -14,7 +14,7 @@ public:
   : Node("aeris_telemetry_monitor")
   {
     position_topic_ = this->declare_parameter<std::string>(
-      "position_topic", "/fmu/out/vehicle_local_position");
+      "position_topic", "/fmu/out/vehicle_local_position_v1");
     log_every_n_ = this->declare_parameter<int>("log_every_n", 50);
     moving_speed_threshold_ =
       this->declare_parameter<double>("moving_speed_threshold", 0.1);

@@ -1,5 +1,5 @@
 aeris_telemetry_monitor:
   ros__parameters:
-    position_topic: /fmu/out/vehicle_local_position
+    position_topic: /fmu/out/vehicle_local_position_v1
     log_every_n: 50
     moving_speed_threshold: 0.1

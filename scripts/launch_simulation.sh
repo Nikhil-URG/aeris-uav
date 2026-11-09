@@ -55,4 +55,22 @@ cd "$PX4_DIR"
 echo "[launch] Starting PX4 SITL (headless=${HEADLESS:-0})."
 echo "[launch] Agent log: $LOG_DIR/microxrce_agent.log"
 echo "[launch] PX4 log:   $LOG_DIR/px4_sitl.log"
-make px4_sitl gz_x500 2>&1 | tee "$LOG_DIR/px4_sitl.log"
+
+# PX4's interactive shell redraws its prompt continuously when stdout is a
+# pipe, which can produce gigabytes of log data. Running under a PTY via
+# `script` keeps the shell quiet and still records the session. Avoid `| tee`.
+MAX_LOG_BYTES=$((200 * 1024 * 1024))
+if [[ -f "$LOG_DIR/px4_sitl.log" ]]; then
+  LOG_BYTES="$(stat -c%s "$LOG_DIR/px4_sitl.log" 2>/dev/null || echo 0)"
+  if (( LOG_BYTES > MAX_LOG_BYTES )); then
+    mv -f "$LOG_DIR/px4_sitl.log" "$LOG_DIR/px4_sitl.log.prev"
+    echo "[launch] Rotated oversized PX4 log to px4_sitl.log.prev."
+  fi
+fi
+
+if command -v script >/dev/null 2>&1; then
+  script -q -e -f -c "make px4_sitl gz_x500" "$LOG_DIR/px4_sitl.log"
+else
+  echo "[launch] WARNING: 'script' not found; PX4 output will not be logged." >&2
+  make px4_sitl gz_x500
+fi
