@@ -4,8 +4,10 @@
 **Phase:** Week 1 complete — Week 2 (offboard controller) is next  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
-**Current HEAD:** run `git log -1 --oneline` (this checkpoint is the latest commit)  
-**Planned remote:** `git@github.com:Nikhil-URG/aeris-uav.git`
+**Checkpoint commit:** `0486c1e`  
+**Tag:** `week-1-checkpoint`  
+**Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
+**Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
 This document is the portable handoff. It records what is verified, how to reproduce the environment, what bit us along the way, and what to do next. Read this before touching the code after a break.
 
@@ -384,19 +386,26 @@ Do not upgrade PX4 or px4_msgs. Ask before changing the pinned versions.
 
 ## 10. Git and publishing
 
-SSH authentication to GitHub is configured and works as `Nikhil-URG`. The planned repository is:
+SSH authentication to GitHub is configured and works as `Nikhil-URG`. The repository is live at:
 
 ```text
 git@github.com:Nikhil-URG/aeris-uav.git
+https://github.com/Nikhil-URG/aeris-uav
 ```
 
-Current branch: `main`.
+Current branch: `main`. `main` and the annotated tag `week-1-checkpoint` are pushed. The tag points to the Week 1 checkpoint commit `0486c1e`; later documentation commits may exist on `main`.
 
-When the empty remote repository exists:
+Push subsequent changes:
 
 ```bash
-git remote add origin git@github.com:Nikhil-URG/aeris-uav.git
-git push -u origin main
+git push origin main
+```
+
+Create a future checkpoint:
+
+```bash
+git tag -a week-2-checkpoint -m "Week 2 complete: offboard flight verified"
+git push origin week-2-checkpoint
 ```
 
 The repository contains a submodule (`px4_msgs`). A fresh clone should use:
@@ -411,20 +420,9 @@ If the clone was not recursive:
 git submodule update --init --recursive
 ```
 
-### Creating the remote
+### Remote creation note
 
-GitHub does not create repositories over SSH. The remote must be created through the GitHub web UI or an authenticated API token / GitHub CLI. If `gh` is available:
-
-```bash
-gh auth login
-gh repo create Nikhil-URG/aeris-uav --private --source=. --remote=origin --push
-```
-
-Otherwise create an empty repository (no README, no `.gitignore`, no license) at:
-
-<https://github.com/new?name=aeris-uav>
-
-then add the remote and push.
+GitHub does not create repositories over SSH. For a future project, create the empty repository through the web UI or an authenticated GitHub CLI, then add the remote. The AERIS remote already exists, so this is recorded only for reproducibility.
 
 ---
 

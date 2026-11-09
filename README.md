@@ -1,5 +1,7 @@
 # AERIS — Autonomous UAV Inspection & Reliability System
 
+**Repository:** <https://github.com/Nikhil-URG/aeris-uav>
+
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
 **Current status:** Week 1 complete — PX4, Gazebo, QGC, uXRCE-DDS, and telemetry verified. Week 2 offboard controller is next.
