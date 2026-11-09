@@ -221,6 +221,78 @@ After the reboot, the user confirmed:
 
 ---
 
+## 2026-11-09 — Week 2: offboard controller and first autonomous flight
+
+### Goal
+
+Implement the Week 2 C++ offboard controller: readiness checks, offboard heartbeat, mode request, arming, takeoff to 5 m, position hold and controlled landing.
+
+### Implemented
+
+- `aeris_flight_control/src/offboard_controller.cpp`
+- `aeris_bringup/config/offboard.yaml` and `launch/offboard.launch.py`
+- State machine: `WAIT_FOR_READY → PRESTREAM → REQUEST_OFFBOARD → ARM → TAKEOFF → HOLD → LAND → DONE`, with `ABORT_LAND → ABORTED` on fault.
+- Services `~/start` and `~/abort` (`std_srvs/srv/Trigger`).
+- 20 Hz `OffboardControlMode` + `TrajectorySetpoint` stream (PX4 `COM_OF_LOSS_T` default 1.0 s).
+- Safety checks: pose/velocity validity, status freshness, preflight checks, disarmed state, failsafe, per-state timeouts, horizontal/altitude limits, hold-error limit.
+- PX4-time timestamps taken from `VehicleLocalPosition`.
+
+### Flight test — clean final run
+
+Artifact: `docs/experiments/week2_offboard_run.log`
+
+| Event | Result |
+|---|---|
+| `DO_SET_MODE` (offboard) | accepted |
+| `ARM_DISARM` | accepted |
+| `NAV_LAND` | accepted |
+| Takeoff to 5 m | ~7.8 s |
+| Hold duration | 10 s |
+| Steady-state hold error | 0.01–0.03 m |
+| Landing to disarm | ~10.9 s |
+| Final state | disarmed, `AUTO_LOITER`, `pre_flight_checks_pass=true` |
+| PX4 events | Takeoff detected, Landing detected, Disarmed by landing |
+
+### Abort-path test
+
+During a separate run, an external QGC land command arrived while the controller was in `HOLD`. The controller detected that PX4 had left offboard mode, sent its own `NAV_LAND`, stopped the stream, and the vehicle landed and disarmed safely. This validated the abort path even though the run ended in `ABORTED` rather than `DONE`.
+
+### Issues and decisions
+
+1. **Offboard signal loss blocks preflight after landing.**
+   - PX4's `offboard_control_signal_lost` remains true after the node stops streaming and keeps `pre_flight_checks_pass` false.
+   - Fix: publish a 2 Hz idle `OffboardControlMode` heartbeat while no mission is streaming.
+
+2. **POSCTL is not a good post-landing mode for this SITL setup.**
+   - POSCTL requires a manual-control link; this GCS-only setup has none.
+   - Fix: restore `AUTO_LOITER` after landing, which allows preflight checks to pass for a subsequent run.
+
+3. **External land during HOLD looked like a failure.**
+   - Fix: if offboard is lost and `nav_state == AUTO_LAND`, transition to `LAND` rather than `ABORT_LAND`. The abort path remains for other faults.
+
+4. **Stale offboard launch processes interfered with a test.**
+   - Two `ros2 launch` instances from earlier experiments were still alive and both published heartbeats.
+   - Operational note: verify the process list before a flight; stop old `offboard_controller`/`ros2 launch` instances.
+
+5. **PX4 v1.17 `_v1` topic suffix applies to `vehicle_status_v1` as well.**
+   - The controller uses the discovered names, not older examples.
+
+### Measurements
+
+- Setpoint rate: 20 Hz.
+- Takeoff ramp: target 1.0 m/s, vehicle reached 5 m in ~7.8 s.
+- Hold error after convergence: ≤0.03 m (target tolerance 0.3 m).
+- Landing: ~10.9 s from `NAV_LAND` to disarm.
+- Command acknowledgements: all accepted (result 0).
+
+### Pending / next
+
+- Week 3: mission manager state machine, waypoint missions, validation and structured logging.
+- Week 6: scripted fault injection for setpoint-stream loss, invalid pose and external mode changes.
+- Add an automated offboard integration test once the mission manager can drive missions.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

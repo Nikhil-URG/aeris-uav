@@ -106,6 +106,12 @@ if command -v ros2 >/dev/null 2>&1; then
   else
     warn "aeris_flight_control not discoverable; build/source the workspace"
   fi
+
+  if ros2 pkg executables aeris_flight_control 2>/dev/null | grep -q 'offboard_controller'; then
+    ok "offboard_controller executable available"
+  else
+    warn "offboard_controller executable missing; rebuild the workspace"
+  fi
 fi
 
 section "Ground control"

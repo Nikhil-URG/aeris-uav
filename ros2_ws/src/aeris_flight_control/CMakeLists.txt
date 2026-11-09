@@ -13,6 +13,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 add_executable(telemetry_monitor
   src/telemetry_monitor.cpp
@@ -25,7 +26,21 @@ ament_target_dependencies(telemetry_monitor
   px4_msgs
 )
 
-install(TARGETS telemetry_monitor
+add_executable(offboard_controller
+  src/offboard_controller.cpp
+)
+
+target_compile_features(offboard_controller PRIVATE cxx_std_17)
+
+ament_target_dependencies(offboard_controller
+  rclcpp
+  px4_msgs
+  std_srvs
+)
+
+install(TARGETS
+    telemetry_monitor
+    offboard_controller
   DESTINATION lib/${PROJECT_NAME}
 )
 

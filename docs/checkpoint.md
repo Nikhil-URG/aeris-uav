@@ -1,11 +1,11 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-09  
-**Phase:** Week 1 complete — Week 2 (offboard controller) is next  
+**Phase:** Week 2 complete — Week 3 (mission manager) is next  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
-**Checkpoint commit:** `0486c1e`  
-**Tag:** `week-1-checkpoint`  
+**Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
+**Week 2 tag:** `week-2-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -17,8 +17,6 @@ This document is the portable handoff. It records what is verified, how to repro
 
 AERIS is a simulated industrial-inspection UAV built on **PX4 + ROS 2 Jazzy**. PX4 owns low-level flight stabilization (EKF2, position/attitude control, actuators). The ROS 2 application owns mission-level intelligence and talks to PX4 through **uXRCE-DDS**.
 
-Week 1 established the simulation foundation and a read-only C++ telemetry monitor:
-
 ```text
 Gazebo Harmonic / X500
           │ sensors
@@ -29,12 +27,16 @@ PX4 v1.17.0
           ▼
 ROS 2 Jazzy
   aeris_flight_control (C++)
-    └── telemetry_monitor
+    ├── telemetry_monitor        (Week 1)
+    └── offboard_controller      (Week 2)
   aeris_bringup (Python)
-    └── telemetry.launch.py
+    ├── telemetry.launch.py
+    └── offboard.launch.py
 ```
 
-Week 2 adds the offboard controller: readiness checks, offboard heartbeat, mode request, arming, takeoff to 5 m, position hold and controlled landing.
+Week 2 added a service-triggered offboard controller: readiness checks, 20 Hz offboard heartbeat, mode request, arming, takeoff to 5 m, position hold and controlled landing.
+
+Week 3 adds the mission manager: waypoint missions, a state machine, validation and structured logging.
 
 ---
 
@@ -49,16 +51,21 @@ Week 2 adds the offboard controller: readiness checks, offboard heartbeat, mode 
 | QGroundControl | `v5.1.5` AppImage at `~/Applications/QGroundControl.AppImage` |
 | ROS 2 | Jazzy (`/opt/ros/jazzy`) |
 | System Python | 3.12.3 at `/usr/bin/python3` |
-| NVIDIA driver | `595.104.02` (after reboot; `nvidia-smi` works) |
-| Workspace build | 3 packages: `px4_msgs`, `aeris_flight_control`, `aeris_bringup` |
+| NVIDIA driver | `595.104.02` (`nvidia-smi` works after reboot) |
+| Workspace build | `px4_msgs`, `aeris_flight_control`, `aeris_bringup` |
 | Telemetry rate | **50.005 Hz** on `/fmu/out/vehicle_local_position_v1` |
-| Estimator validity | `PosValid=YES VelValid=YES` |
-| GUI | User confirmed the X500 is visible in Gazebo |
-| QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` and `[commander] Ready for takeoff!` |
-| Environment check | `11 ok, 0 warnings, 0 failures` |
-| Disk free | ~35 GiB at checkpoint |
+| Offboard stream | **20 Hz** (`OffboardControlMode` + `TrajectorySetpoint`) |
+| Idle heartbeat | **2 Hz** while no mission is active |
+| Clean flight | Arm → 5 m → 10 s hold → land → disarm |
+| Takeoff time | ~7.8 s to 5 m |
+| Steady-state hold error | 0.01–0.03 m |
+| Landing to disarm | ~10.9 s |
+| Final post-landing state | `AUTO_LOITER`, disarmed, `pre_flight_checks_pass=true` |
+| Abort path | External QGC land during HOLD → controller sent `NAV_LAND` → safe landing |
+| QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
+| Environment check | `12 ok, 0 warnings, 0 failures` |
 
-Milestone 1 acceptance is complete.
+Milestone 1 and Milestone 2 acceptance are complete.
 
 ---
 
@@ -72,6 +79,7 @@ Milestone 1 acceptance is complete.
 | ROS workspace | `ros2_ws/` |
 | QGC AppImage | `~/Applications/QGroundControl.AppImage` |
 | Simulation logs | `results/logs/` (ignored by Git) |
+| Week 2 flight evidence | `docs/experiments/week2_offboard_run.log` |
 | Development journal | `docs/experiments/development_log.md` |
 
 The machine is Pop!_OS 24.04 (Ubuntu 24.04 `noble` base) with an Intel i5-13420H, 15 GiB RAM, and an RTX 4050 Laptop GPU.
@@ -97,18 +105,20 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 ├── docs/
 │   ├── architecture.md             # layers, frames, interfaces, ADRs
 │   ├── installation.md             # setup + troubleshooting
-│   ├── flight_control.md           # telemetry contract + Week 2 design
+│   ├── flight_control.md           # telemetry + offboard contract/results
 │   ├── mission_design.md           # Week 3 state machine and mission schema
 │   ├── checkpoint.md               # this file
-│   └── experiments/development_log.md
+│   └── experiments/
+│       ├── development_log.md
+│       └── week2_offboard_run.log  # clean Week 2 flight log
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
 │   ├── px4_msgs/                   # Git submodule, v1.17.0
-│   ├── aeris_flight_control/       # C++ telemetry node
+│   ├── aeris_flight_control/       # C++ telemetry + offboard controller
 │   └── aeris_bringup/              # launch + YAML config
 ├── scripts/
-│   ├── setup.sh                    # one-command bootstrap
-│   ├── aeris_env.sh                # conda-safe ROS shell
+│   ├── setup.sh
+│   ├── aeris_env.sh
 │   ├── install_dependencies.sh
 │   ├── bootstrap_px4.sh
 │   ├── install_microxrce_agent.sh
@@ -123,13 +133,13 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 └── results/                        # logs/plots/reports (ignored)
 ```
 
-Key files for the next milestone:
+Key Week 2 files:
 
-- `ros2_ws/src/aeris_flight_control/src/telemetry_monitor.cpp`
-- `ros2_ws/src/aeris_flight_control/CMakeLists.txt`
-- `ros2_ws/src/aeris_bringup/config/telemetry.yaml`
-- `ros2_ws/src/aeris_bringup/launch/telemetry.launch.py`
-- `docs/flight_control.md` (offboard sequence and safety interlocks)
+- `ros2_ws/src/aeris_flight_control/src/offboard_controller.cpp`
+- `ros2_ws/src/aeris_bringup/config/offboard.yaml`
+- `ros2_ws/src/aeris_bringup/launch/offboard.launch.py`
+- `docs/flight_control.md`
+- `docs/experiments/week2_offboard_run.log`
 
 ---
 
@@ -144,8 +154,6 @@ cd aeris-uav
 # git submodule update --init --recursive
 ```
 
-If the remote has not been created yet, see §10.
-
 ### 5.2 Environment
 
 ```bash
@@ -153,7 +161,7 @@ source scripts/aeris_env.sh
 bash scripts/check_environment.sh
 ```
 
-Expected: system Python 3.12, ROS Jazzy, Gazebo 8.x, PX4 `v1.17.0`, agent installed, workspace built, `11 ok, 0 warnings, 0 failures`.
+Expected: system Python 3.12, ROS Jazzy, Gazebo 8.x, PX4 `v1.17.0`, agent installed, workspace built, `12 ok, 0 warnings, 0 failures`.
 
 If dependencies are missing, run the setup scripts in order:
 
@@ -172,7 +180,7 @@ bash scripts/build.sh
 
 If the build picks up conda Python, see §6.1 and remove the stale build tree before rebuilding.
 
-### 5.4 Run
+### 5.4 Run the simulation
 
 Terminal 1 — DDS agent + PX4 + Gazebo:
 
@@ -193,19 +201,48 @@ source scripts/aeris_env.sh
 ros2 launch aeris_bringup telemetry.launch.py
 ```
 
-QGC (optional but verified):
+QGC:
 
 ```bash
 scripts/run_qgroundcontrol.sh
 ```
 
-### 5.5 Verify topics
+### 5.5 Offboard flight demo
+
+With PX4, Gazebo and QGC running:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup offboard.launch.py
+```
+
+In another terminal, trigger the mission:
+
+```bash
+ros2 service call /aeris_offboard_controller/start std_srvs/srv/Trigger
+```
+
+Abort:
+
+```bash
+ros2 service call /aeris_offboard_controller/abort std_srvs/srv/Trigger
+```
+
+Expected sequence:
+
+```text
+WAIT_FOR_READY → PRESTREAM → REQUEST_OFFBOARD → ARM
+→ TAKEOFF → HOLD → LAND → DONE
+```
+
+Do not interact with QGC during an automated run unless you intend to exercise the external-land/abort path.
+
+### 5.6 Verify topics
 
 ```bash
 source scripts/aeris_env.sh
 ros2 topic list | grep '/fmu/'
 ros2 topic hz /fmu/out/vehicle_local_position_v1
-ros2 topic echo --once /fmu/out/vehicle_local_position_v1
 ```
 
 Expected: ~50 Hz, `xy_valid: true`, `z_valid: true`, `v_xy_valid: true`, `v_z_valid: true`.
@@ -216,9 +253,9 @@ Expected: ~50 Hz, `xy_valid: true`, `z_valid: true`, `v_xy_valid: true`, `v_z_va
 
 ### 6.1 Conda leaks into CMake
 
-Even with `PATH` cleaned, `CONDA_PREFIX` made CMake select `/home/lucifer/miniforge3/bin/python3` (3.13). The build then failed with `ModuleNotFoundError: No module named 'em'`.
+Even with `PATH` cleaned, `CONDA_PREFIX` made CMake select `/home/lucifer/miniforge3/bin/python3` (3.13). The build failed with `ModuleNotFoundError: No module named 'em'`.
 
-`scripts/aeris_env.sh` now unsets `CONDA_PREFIX`, `CONDA_DEFAULT_ENV`, `CONDA_SHLVL`, `CONDA_PYTHON_EXE`, `CONDA_EXE`, `_CONDA_EXE`, `_CONDA_ROOT`, `_CE_CONDA`, and strips conda paths from `PATH`, `PYTHONPATH`, `LD_LIBRARY_PATH`, `CMAKE_PREFIX_PATH` and `PKG_CONFIG_PATH`.
+`scripts/aeris_env.sh` unsets `CONDA_PREFIX`, `CONDA_DEFAULT_ENV`, `CONDA_SHLVL`, `CONDA_PYTHON_EXE`, `CONDA_EXE`, `_CONDA_EXE`, `_CONDA_ROOT`, `_CE_CONDA`, and strips conda paths from `PATH`, `PYTHONPATH`, `LD_LIBRARY_PATH`, `CMAKE_PREFIX_PATH` and `PKG_CONFIG_PATH`.
 
 If a build already cached the wrong interpreter:
 
@@ -235,15 +272,7 @@ Check `_Python3_EXECUTABLE:INTERNAL` in `ros2_ws/build/<package>/CMakeCache.txt`
 
 ### 6.3 PX4 v1.17 uses `_v1` DDS topic suffixes
 
-The active local-position topic is:
-
-```text
-/fmu/out/vehicle_local_position_v1
-```
-
-not the unsuffixed name used in the original brief. The unsuffixed name can appear in the ROS graph if a subscriber creates it, but it has no publisher. This applies to other versioned messages such as `vehicle_status_v1`.
-
-Always discover topic names after starting SITL:
+The active local-position topic is `/fmu/out/vehicle_local_position_v1`; status is `/fmu/out/vehicle_status_v1`. The unsuffixed names can appear in the ROS graph if a subscriber creates them, but they have no publisher. Always discover topic names after starting SITL:
 
 ```bash
 ros2 topic list | grep '/fmu/out'
@@ -251,29 +280,47 @@ ros2 topic list | grep '/fmu/out'
 
 ### 6.4 Never pipe PX4's interactive shell through `tee`
 
-PX4 redraws its prompt continuously when stdout is a pipe. An early run produced two **7 GB** log files. `scripts/launch_simulation.sh` now runs PX4 under a PTY with:
+PX4 redraws its prompt continuously when stdout is a pipe. An early run produced two **7 GB** log files. `scripts/launch_simulation.sh` now runs PX4 under a PTY with `script` and rotates logs over 200 MB.
+
+### 6.5 Offboard signal loss blocks preflight after landing
+
+PX4 sets `offboard_control_signal_lost=true` when the offboard stream stops, which keeps `pre_flight_checks_pass` false even in another mode. The controller now publishes a **2 Hz idle `OffboardControlMode` heartbeat** while no mission is streaming. Without it, a second run cannot pass preflight checks.
+
+### 6.6 Restore AUTO_LOITER, not POSCTL
+
+In this GCS-only SITL setup there is no RC/manual-control link. `POSCTL` requires one and keeps preflight checks false. After landing, the controller requests `AUTO_LOITER` (custom main mode 4, sub mode 3), which allows `pre_flight_checks_pass=true` again.
+
+### 6.7 External AUTO_LAND is a landing, not a failure
+
+If an operator or QGC commands `AUTO_LAND` during HOLD, PX4 leaves offboard mode. The controller detects `nav_state == AUTO_LAND` and transitions to `LAND` instead of `ABORT_LAND`. Other offboard losses still abort.
+
+### 6.8 Stale offboard launch processes interfere
+
+Multiple `ros2 launch` instances from earlier tests can publish competing heartbeats. Before a flight, verify:
 
 ```bash
-script -q -e -f -c "make px4_sitl gz_x500" "$LOG_DIR/px4_sitl.log"
+ps -eo pid,args | grep -E 'offboard_controller|offboard.launch'
 ```
 
-It also rotates a PX4 log larger than 200 MB to `px4_sitl.log.prev`. Do not revert to `| tee`.
+Stop old instances before starting a new mission.
 
-### 6.5 QGC on Wayland
+### 6.9 QGC on Wayland
 
-`scripts/run_qgroundcontrol.sh` forces `QT_QPA_PLATFORM=xcb`. If QGC misbehaves, use that wrapper rather than launching the AppImage directly. The AppImage may ignore SIGTERM; stop it with SIGKILL if needed.
+`scripts/run_qgroundcontrol.sh` forces `QT_QPA_PLATFORM=xcb`. The AppImage may ignore SIGTERM; stop it with SIGKILL if needed.
 
-### 6.6 NVIDIA driver mismatch
+### 6.10 NVIDIA driver mismatch
 
-The first session reported `Failed to initialize NVML: Driver/library version mismatch`. A reboot resolved it; the driver now reports `595.104.02`. If the warning returns after a system update, reboot before diagnosing Gazebo rendering.
+The first session reported `Failed to initialize NVML: Driver/library version mismatch`. A reboot resolved it; the driver now reports `595.104.02`. If it returns after a system update, reboot before diagnosing Gazebo rendering.
 
-### 6.7 PX4 is external
+### 6.11 PX4 is external
 
 PX4-Autopilot is **not** vendored. It lives at `~/aeris_dev/PX4-Autopilot` and is pinned to `v1.17.0` (commit `d6f12ad1c4`). The `px4_msgs` submodule is pinned to the matching `v1.17.0` commit. Do not upgrade either independently; follow `px4/README.md`.
 
 ---
 
-## 7. Milestone 1 acceptance record
+## 7. Acceptance records
+
+### Milestone 1 — telemetry foundation
 
 | Check | Result |
 |---|---|
@@ -284,65 +331,64 @@ PX4-Autopilot is **not** vendored. It lives at `~/aeris_dev/PX4-Autopilot` and i
 | `/fmu/*` topics visible | PASS |
 | C++ telemetry node compiles/executes | PASS |
 | Position telemetry continuous | PASS — 50.005 Hz |
-| Estimator validity | PASS — `PosXY/PosZ/Vel` valid |
+| Estimator validity | PASS |
 
-Evidence and timings are in `docs/experiments/development_log.md`.
+### Milestone 2 — offboard flight
+
+| Check | Result |
+|---|---|
+| Offboard mode accepted | PASS |
+| Arming accepted | PASS |
+| Takeoff to 5 m | PASS — ~7.8 s |
+| Position hold | PASS — 10 s, 0.01–0.03 m steady-state error |
+| Landing accepted | PASS |
+| Disarmed after landing | PASS |
+| Post-landing preflight readiness | PASS — AUTO_LOITER, preflight true |
+| Abnormal case: external land during HOLD | PASS — controlled landing, no crash |
+
+Evidence and timings are in `docs/experiments/development_log.md` and `docs/experiments/week2_offboard_run.log`.
 
 ---
 
-## 8. Week 2 plan — offboard controller
+## 8. Week 3 plan — mission manager
 
 ### Goal
 
-Add a C++ node (working name `offboard_controller`) to `aeris_flight_control` that:
+Add a Python mission layer that owns inspection goals and mission state, while `aeris_flight_control` remains the only component that talks to PX4.
 
-1. Waits for valid local position and vehicle status.
-2. Streams `/fmu/in/offboard_control_mode` and `/fmu/in/trajectory_setpoint` continuously.
-3. Requests offboard mode.
-4. Arms the vehicle.
-5. Takes off to 5 m (`z = -5.0` NED).
-6. Holds position within a documented tolerance.
-7. Commands a controlled landing.
-8. Stops the setpoint stream on any fault and logs why.
+### Suggested deliverables
 
-### Topics to use
+1. `aeris_interfaces` package with:
+   - a mission goal/waypoint message or service;
+   - a flight-status message (state, armed, altitude, target, error);
+   - optional mission-state message.
+2. `aeris_mission_manager` Python package:
+   - YAML mission parser and validator (see `docs/mission_design.md`);
+   - explicit state machine: `IDLE → PREFLIGHT → TAKEOFF → TRANSIT → INSPECT → REPLAN/TRANSIT → RTL/LAND → COMPLETE/ABORT`;
+   - sequential waypoint execution with hold times;
+   - structured JSONL event log in `results/logs/<run_id>/`;
+   - mission timeout and abort handling.
+3. `aeris_flight_control` extension:
+   - accept waypoint goals from the mission manager (service or topic);
+   - continue the 20 Hz offboard stream and report goal reached / failed;
+   - preserve the existing manual `start`/`abort` services for direct testing.
+4. `aeris_bringup` launch/config for a full mission.
+5. Tests:
+   - mission validation unit tests;
+   - state transition tests;
+   - at least one 2-waypoint SITL mission.
 
-| Direction | Topic | Type |
-|---|---|---|
-| Subscribe | `/fmu/out/vehicle_local_position_v1` | `px4_msgs/msg/VehicleLocalPosition` |
-| Subscribe | `/fmu/out/vehicle_status_v1` | `px4_msgs/msg/VehicleStatus` |
-| Subscribe | `/fmu/out/vehicle_control_mode` | `px4_msgs/msg/VehicleControlMode` |
-| Subscribe | `/fmu/out/failsafe_flags` | `px4_msgs/msg/FailsafeFlags` |
-| Publish | `/fmu/in/offboard_control_mode` | `px4_msgs/msg/OffboardControlMode` |
-| Publish | `/fmu/in/trajectory_setpoint` | `px4_msgs/msg/TrajectorySetpoint` |
-| Publish | `/fmu/in/vehicle_command` | `px4_msgs/msg/VehicleCommand` |
+### Interface recommendation
 
-Verify exact names with `ros2 topic list`; do not assume they match older examples.
+Keep PX4 command authority in `aeris_flight_control`. Use a goal interface (for example `aeris_interfaces/srv/GoTo` or `aeris_interfaces/msg/WaypointGoal`) plus a status topic. The mission manager should not publish `/fmu/in/*` directly.
 
-### Safety interlocks
+### Week 3 acceptance
 
-- Never request offboard or arm without valid position/velocity.
-- Stream setpoints for at least 1 s before requesting offboard.
-- Stop the stream if validity is lost, the setpoint age exceeds a threshold, PX4 leaves offboard mode, or the mission supervisor heartbeat disappears (Week 6).
-- Verify PX4's offboard-loss action (`COM_OF_LOSS_T` and related failsafe parameters) in simulation before autonomous missions.
-- Log every mode request, arming transition and fault.
-
-### Acceptance tests
-
-- Offboard heartbeat accepted; mode switch succeeds.
-- Arm, take off to 5 m, hold within tolerance, land.
-- Kill the setpoint publisher mid-flight; verify PX4 failsafe behaviour.
-- Invalid pose; verify the controller refuses to arm.
-- Measure mode-switch latency, setpoint age and position-hold error.
-
-### Suggested order
-
-1. Add `offboard_controller.cpp` and a small state machine.
-2. Parameterize altitude, rates, tolerances and timeouts in `aeris_bringup/config/offboard.yaml`.
-3. Add `offboard.launch.py`.
-4. Unit-test the state machine where possible.
-5. Run the nominal flight, then the fault cases.
-6. Record results in `docs/flight_control.md` and the development log.
+- Load a 2-waypoint inspection mission.
+- Take off, transit to waypoint 1, hold, transit to waypoint 2, hold, return/land.
+- Reject invalid missions (geofence, altitude, duplicate IDs, bad frame).
+- Produce a structured run log and a short report.
+- No regression in the Week 2 manual offboard demo.
 
 ---
 
@@ -360,19 +406,22 @@ Read these files first:
 - docs/architecture.md
 - docs/installation.md
 - docs/flight_control.md
+- docs/mission_design.md
 - docs/experiments/development_log.md
+- docs/experiments/week2_offboard_run.log
 
 Current state:
-- Week 1 is complete: PX4 SITL, Gazebo Harmonic 8.15, QGroundControl, uXRCE-DDS Agent v2.4.3, and the C++ telemetry monitor are verified.
-- Telemetry: /fmu/out/vehicle_local_position_v1 at ~50 Hz, PosValid=YES, VelValid=YES.
-- The working tree is clean; the repo is /home/lucifer/Documents/Project_Aeris on branch main.
-- PX4 lives outside the repo at ~/aeris_dev/PX4-Autopilot (pinned v1.17.0).
+- Week 1 and Week 2 are complete.
+- The C++ offboard controller in aeris_flight_control is verified: 20 Hz offboard stream, arm, takeoff to 5 m, 10 s hold, land, disarm.
+- Clean run: takeoff ~7.8 s, steady hold error 0.01-0.03 m, landing to disarm ~10.9 s.
+- The controller exposes /aeris_offboard_controller/start and /abort (std_srvs/srv/Trigger).
+- It publishes a 2 Hz idle OffboardControlMode heartbeat and restores AUTO_LOITER after landing, so preflight checks pass for a repeat run.
+- PX4 v1.17 uses _v1 topic suffixes for vehicle_local_position and vehicle_status.
 - Always run `source scripts/aeris_env.sh` before ROS/PX4 commands; it keeps conda's Python 3.13 out of the ROS shell.
-- PX4 v1.17 appends `_v1` to versioned DDS topics. Never assume unsuffixed names.
 - Never pipe PX4's interactive console through tee; launch_simulation.sh uses `script` for PTY logging.
 
-Next task: implement the Week 2 offboard controller in aeris_flight_control:
-readiness checks, offboard control mode + trajectory setpoint heartbeat, offboard mode request, arming, takeoff to 5 m (NED z=-5.0), position hold, and controlled landing. Add parameters/launch config and tests for invalid pose and setpoint-stream loss. Update docs and the development log with measured results.
+Next task: implement Week 3, the mission manager.
+Create aeris_interfaces and aeris_mission_manager, implement the mission YAML schema/validator and state machine, and integrate sequential waypoint goals with the existing offboard controller. Add validation/state tests and produce structured mission logs. Do not put /fmu/in publishers in the mission manager; flight-control authority stays in aeris_flight_control.
 
 Before changing code, run:
   source scripts/aeris_env.sh
@@ -386,14 +435,17 @@ Do not upgrade PX4 or px4_msgs. Ask before changing the pinned versions.
 
 ## 10. Git and publishing
 
-SSH authentication to GitHub is configured and works as `Nikhil-URG`. The repository is live at:
+The repository is live at:
 
 ```text
 git@github.com:Nikhil-URG/aeris-uav.git
 https://github.com/Nikhil-URG/aeris-uav
 ```
 
-Current branch: `main`. `main` and the annotated tag `week-1-checkpoint` are pushed. The tag points to the Week 1 checkpoint commit `0486c1e`; later documentation commits may exist on `main`.
+Current branch: `main`. Both checkpoint tags are pushed:
+
+- `week-1-checkpoint` — Week 1 telemetry foundation (`0486c1e`)
+- `week-2-checkpoint` — Week 2 offboard flight (this checkpoint)
 
 Push subsequent changes:
 
@@ -404,8 +456,8 @@ git push origin main
 Create a future checkpoint:
 
 ```bash
-git tag -a week-2-checkpoint -m "Week 2 complete: offboard flight verified"
-git push origin week-2-checkpoint
+git tag -a week-3-checkpoint -m "Week 3 complete: mission manager verified"
+git push origin week-3-checkpoint
 ```
 
 The repository contains a submodule (`px4_msgs`). A fresh clone should use:
@@ -420,10 +472,6 @@ If the clone was not recursive:
 git submodule update --init --recursive
 ```
 
-### Remote creation note
-
-GitHub does not create repositories over SSH. For a future project, create the empty repository through the web UI or an authenticated GitHub CLI, then add the remote. The AERIS remote already exists, so this is recorded only for reproducibility.
-
 ---
 
 ## 11. Quick health checklist after a break
@@ -434,12 +482,14 @@ source scripts/aeris_env.sh
 bash scripts/check_environment.sh
 git status
 ros2 pkg list | grep -E '^(aeris_|px4_msgs)'
+ros2 pkg executables aeris_flight_control
 ```
 
 Expected:
 
-- `11 ok, 0 warnings, 0 failures`
+- `12 ok, 0 warnings, 0 failures`
 - clean working tree
 - `aeris_bringup`, `aeris_flight_control`, `px4_msgs`
+- executables: `telemetry_monitor`, `offboard_controller`
 
-Then start the simulation and telemetry as in §5.
+Then start the simulation and run the offboard demo as in §5.

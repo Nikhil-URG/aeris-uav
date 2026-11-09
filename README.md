@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 1 complete — PX4, Gazebo, QGC, uXRCE-DDS, and telemetry verified. Week 2 offboard controller is next.
+**Current status:** Week 2 complete — offboard arm, takeoff to 5 m, position hold and landing verified in SITL. Week 3 mission manager is next.
 
 ## Mission
 
@@ -78,7 +78,8 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── mission_design.md
 │   ├── checkpoint.md
 │   └── experiments/
-│       └── development_log.md
+│       ├── development_log.md
+│       └── week2_offboard_run.log
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
 ├── ros2_ws/
@@ -160,6 +161,29 @@ bash scripts/install_qgroundcontrol.sh
 scripts/run_qgroundcontrol.sh
 ```
 
+## Offboard flight demo
+
+With the simulation and QGC running:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup offboard.launch.py
+```
+
+In another terminal, trigger the mission:
+
+```bash
+ros2 service call /aeris_offboard_controller/start std_srvs/srv/Trigger
+```
+
+The controller waits for a valid pose and preflight checks, streams offboard setpoints at 20 Hz, requests offboard mode, arms, climbs to 5 m, holds for 10 s, lands and disarms. A controlled abort is available:
+
+```bash
+ros2 service call /aeris_offboard_controller/abort std_srvs/srv/Trigger
+```
+
+Do not interact with QGC during an automated run unless you intend to exercise the external-land/abort path. Flight evidence is in [docs/experiments/week2_offboard_run.log](docs/experiments/week2_offboard_run.log).
+
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
 ## Resuming the project
@@ -181,7 +205,7 @@ The environment script is required because this machine has Miniforge first in `
 | Week | Deliverable | Status |
 |---|---|---|
 | 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Complete |
-| 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Planned |
+| 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Complete |
 | 3 | Mission manager: state machine, waypoints, validation, logging | Planned |
 | 4 | Perception: camera, OpenCV, target detection and localization | Planned |
 | 5 | Navigation: depth camera, obstacle detection, local replanning | Planned |

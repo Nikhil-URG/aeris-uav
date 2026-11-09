@@ -80,41 +80,91 @@ Consequences:
 
 The telemetry monitor prints PX4 values verbatim and labels the frame as NED to avoid silent frame confusion.
 
-## 3. Milestone 2 — offboard flight (Week 2)
+## 3. Milestone 2 — offboard controller (Week 2) — implemented and flight-tested
 
-The next executable will be an offboard controller. The intended sequence is:
+The executable is `offboard_controller` in `aeris_flight_control`.
 
-1. **Preflight**
-   - Wait for `/fmu/out/vehicle_status` and a valid `VehicleLocalPosition`.
-   - Verify estimator validity, battery threshold and home position.
-   - Refuse to arm if any check fails.
-2. **Offboard heartbeat**
-   - Publish `/fmu/in/offboard_control_mode` with the position-control bit set.
-   - Publish a valid `/fmu/in/trajectory_setpoint` at a steady rate (target 20 Hz). PX4's offboard-loss timeout is short, so never rely on the minimum; verify the configured `COM_OF_LOSS_T` during the Week 2 tests.
-   - Stream for at least one second before requesting offboard mode.
-3. **Mode and arming**
-   - Send `VEHICLE_CMD_DO_SET_MODE` with `PX4_CUSTOM_MAIN_MODE_OFFBOARD`.
-   - Send `VEHICLE_CMD_COMPONENT_ARM_DISARM` to arm only after offboard mode is confirmed.
-4. **Takeoff**
-   - Command a position setpoint at the target altitude (e.g. `z = -5.0`) with a bounded vertical ramp.
-   - Hold the setpoint and verify position convergence.
-5. **Landing**
-   - Command `VEHICLE_CMD_NAV_LAND` or ramp the setpoint down, depending on the test.
-   - Disarm only after touchdown is confirmed.
+```bash
+ros2 launch aeris_bringup offboard.launch.py
+ros2 service call /aeris_offboard_controller/start std_srvs/srv/Trigger
+```
 
-The exact PX4 state transitions and timing will be measured, not assumed. Results go into this document and the development log.
+Configuration lives in `ros2_ws/src/aeris_bringup/config/offboard.yaml`.
 
-### Offboard safety interlock
+### Services
 
-The controller must stop publishing setpoints if any of the following becomes false:
+| Service | Type | Purpose |
+|---|---|---|
+| `~/start` | `std_srvs/srv/Trigger` | Start after readiness checks pass |
+| `~/abort` | `std_srvs/srv/Trigger` | Abort and land at the current position |
 
-- local position valid;
-- local velocity valid;
-- setpoint age below the configured limit;
-- PX4 still in offboard mode;
-- mission supervisor heartbeat present (from Week 6 onward).
+### State machine
 
-When the stream stops, PX4 executes its configured offboard-loss action. That action must be verified in simulation before autonomous missions are attempted.
+```text
+WAIT_FOR_READY
+  -> PRESTREAM            (2 s heartbeat + hold setpoint)
+  -> REQUEST_OFFBOARD     (DO_SET_MODE, custom main mode 6)
+  -> ARM                  (ARM_DISARM, param1=1)
+  -> TAKEOFF              (ramp z from current to -5.0 NED)
+  -> HOLD                 (10 s position hold)
+  -> LAND                 (NAV_LAND at current position)
+  -> DONE                 (disarmed; restore AUTO_LOITER)
+
+Any fault -> ABORT_LAND   (send NAV_LAND, keep signal briefly)
+          -> ABORTED
+```
+
+### Interface contract
+
+| Direction | Topic | Purpose |
+|---|---|---|
+| Subscribe | `/fmu/out/vehicle_local_position_v1` | Pose, velocity, validity, PX4 time |
+| Subscribe | `/fmu/out/vehicle_status_v1` | Arming, nav state, failsafe, preflight |
+| Subscribe | `/fmu/out/vehicle_control_mode` | Offboard flag confirmation |
+| Subscribe | `/fmu/out/vehicle_command_ack` | Command acknowledgement logging |
+| Publish | `/fmu/in/offboard_control_mode` | Position-control heartbeat |
+| Publish | `/fmu/in/trajectory_setpoint` | Position + yaw setpoint (NED) |
+| Publish | `/fmu/in/vehicle_command` | Mode, arm, land commands |
+
+### Safety checks
+
+- Position and velocity validity (`xy_valid`, `z_valid`, `v_xy_valid`, `v_z_valid`).
+- Status and control-mode freshness (1 s timeout).
+- `pre_flight_checks_pass`, disarmed state and no PX4 failsafe before start.
+- Timeouts for mode request, arming, takeoff and landing.
+- Horizontal distance and altitude limits.
+- Position-hold error limit (1 m, sustained for 2 s).
+- Abort sends `NAV_LAND` and keeps the offboard signal briefly so PX4 accepts the landing command before the stream stops.
+- An external `AUTO_LAND` during HOLD is treated as a landing, not a failure.
+
+### Measured results — 2026-11-09
+
+Clean final run (`docs/experiments/week2_offboard_run.log`):
+
+| Metric | Result |
+|---|---|
+| `DO_SET_MODE` / `ARM_DISARM` / `NAV_LAND` acks | accepted (result 0) |
+| Takeoff to 5 m | ~7.8 s (1.0 m/s target ramp) |
+| Hold duration | 10 s |
+| Steady-state hold error | 0.01–0.03 m (initial convergence 0.27 m) |
+| Landing to disarm | ~10.9 s |
+| Final state | disarmed, `AUTO_LOITER`, `pre_flight_checks_pass=true` |
+| PX4 events | Takeoff detected, Landing detected, Disarmed by landing |
+
+An abort-path test was also performed: an external QGC land command arrived during HOLD, the controller detected the loss of offboard mode, sent its own `NAV_LAND`, stopped the stream and the vehicle landed and disarmed safely.
+
+### Operational notes
+
+- Setpoint stream: 20 Hz. PX4's `COM_OF_LOSS_T` default is 1.0 s, so the margin is large.
+- While idle, the node publishes a 2 Hz `OffboardControlMode` heartbeat. Without it, PX4's `offboard_control_signal_lost` blocks `pre_flight_checks_pass` after a landing.
+- After landing the node requests `AUTO_LOITER`. `POSCTL` requires a manual-control link, which is not present in this GCS-only SITL setup.
+- Outgoing message timestamps use PX4 time from `VehicleLocalPosition`, not ROS epoch time.
+- The controller never publishes actuator commands.
+
+### Limitations
+
+- No automated offboard integration test yet; fault injection and scripted abort tests are planned for Week 6.
+- The mission is a single takeoff/hold/land script. Waypoints and mission validation arrive with the Week 3 mission manager.
 
 ## 4. Safety rules
 

@@ -198,6 +198,29 @@ ros2 topic hz /fmu/out/vehicle_local_position_v1
 
 PX4 v1.17 appends `_v1` to versioned message topics. Use `/fmu/out/vehicle_local_position_v1`; the unsuffixed name may appear in the graph if a stale subscriber exists, but it has no publisher.
 
+### Offboard flight demo
+
+With PX4, Gazebo and QGC running:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup offboard.launch.py
+```
+
+In another terminal:
+
+```bash
+ros2 service call /aeris_offboard_controller/start std_srvs/srv/Trigger
+```
+
+The controller waits for valid pose and preflight checks, streams 20 Hz offboard setpoints, arms, climbs to 5 m, holds for 10 s, lands and disarms. Abort with:
+
+```bash
+ros2 service call /aeris_offboard_controller/abort std_srvs/srv/Trigger
+```
+
+Expected state sequence: `WAIT_FOR_READY → PRESTREAM → REQUEST_OFFBOARD → ARM → TAKEOFF → HOLD → LAND → DONE`.
+
 ## 6. QGroundControl (optional but recommended)
 
 ```bash

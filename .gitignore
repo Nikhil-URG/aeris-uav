@@ -35,6 +35,9 @@ results/reports/*
 *.mcap
 *.log
 
+# Experiment evidence logs are documentation artifacts
+!docs/experiments/*.log
+
 # External PX4 checkout (kept outside this repository by default)
 PX4-Autopilot/
 
