@@ -2,7 +2,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 1 — scaffold complete; environment installation and Milestone 1 verification pending.
+**Current status:** Week 1 — headless simulation and telemetry verified; GUI/QGC verification pending.
 
 ## Mission
 
@@ -173,7 +173,7 @@ The environment script is required because this machine has Miniforge first in `
 
 | Week | Deliverable | Status |
 |---|---|---|
-| 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | In progress |
+| 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Headless pass; GUI/QGC pending |
 | 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Planned |
 | 3 | Mission manager: state machine, waypoints, validation, logging | Planned |
 | 4 | Perception: camera, OpenCV, target detection and localization | Planned |
