@@ -186,6 +186,18 @@ Publisher count: 1
 
 Updated the node default, `aeris_bringup/config/telemetry.yaml`, and the architecture/installation/flight-control docs. `claude.md` is left unchanged as the original brief. Other versioned topics (for example `vehicle_status_v1`) follow the same suffix convention; Week 2 offboard work must use the exact discovered topic names rather than assuming them.
 
+### Finding — PX4 shell prompt can flood piped logs
+
+The first headless run piped `make px4_sitl gz_x500` through `tee`. PX4's interactive shell continuously redrew its prompt because stdout was a pipe, producing `results/logs/px4_sitl.log` and `results/logs/launch_sim_console.log` at **7.0 GB each** in a short session.
+
+Fix:
+
+- run PX4 under a PTY with `script -q -e -f -c "make px4_sitl gz_x500" ...`;
+- do not pipe the interactive console through `tee`;
+- rotate the PX4 log if it exceeds 200 MB.
+
+Verification: a later short headless session produced a **6.3 KB** `px4_sitl.log`, and the telemetry monitor still received valid 50 Hz data.
+
 ### Observation — NVIDIA NVML driver/library mismatch
 
 `nvidia-smi` and `scripts/check_environment.sh` report:

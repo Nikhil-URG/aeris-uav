@@ -340,6 +340,14 @@ Confirm `python3 --version` is 3.12 before the PX4 setup step. If PX4's build ca
 
 - Force X11: the `scripts/run_qgroundcontrol.sh` wrapper already sets `QT_QPA_PLATFORM=xcb`.
 
+### PX4 log grows rapidly
+
+Symptom: `results/logs/px4_sitl.log` grows to gigabytes and fills the disk.
+
+Cause: PX4's interactive shell redraws its prompt continuously when stdout is a pipe. Piping `make px4_sitl gz_x500` through `tee` captures that redraw loop.
+
+Fix: use `scripts/launch_simulation.sh`. It runs PX4 under a PTY using `script`, which keeps the shell quiet while still recording the session. Do not pipe the PX4 console through `tee`. The script also rotates a log larger than 200 MB to `px4_sitl.log.prev`.
+
 ### Low disk space
 
 PX4 builds and Gazebo caches grow quickly. Check with:
