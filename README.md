@@ -2,7 +2,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 1 — headless simulation and telemetry verified; GUI/QGC verification pending.
+**Current status:** Week 1 complete — PX4, Gazebo, QGC, uXRCE-DDS, and telemetry verified. Week 2 offboard controller is next.
 
 ## Mission
 
@@ -74,6 +74,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── installation.md
 │   ├── flight_control.md
 │   ├── mission_design.md
+│   ├── checkpoint.md
 │   └── experiments/
 │       └── development_log.md
 ├── px4/
@@ -159,6 +160,10 @@ scripts/run_qgroundcontrol.sh
 
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
+## Resuming the project
+
+Read [docs/checkpoint.md](docs/checkpoint.md) for the current state, verified results, environment details, and a copy-paste resume prompt. It is written so a new session — on any machine — can continue without reconstructing context from chat history.
+
 ## Development workflow
 
 ```bash
@@ -173,7 +178,7 @@ The environment script is required because this machine has Miniforge first in `
 
 | Week | Deliverable | Status |
 |---|---|---|
-| 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Headless pass; GUI/QGC pending |
+| 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Complete |
 | 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Planned |
 | 3 | Mission manager: state machine, waypoints, validation, logging | Planned |
 | 4 | Perception: camera, OpenCV, target detection and localization | Planned |

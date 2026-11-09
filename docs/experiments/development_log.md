@@ -95,8 +95,8 @@ git ls-remote --tags https://github.com/PX4/px4_msgs.git refs/tags/v1.17.0
 | Check | Result | Evidence |
 |---|---|---|
 | PX4 SITL boots | PASS | `pxh>` prompt; `INFO [init] Gazebo world is ready` |
-| Gazebo shows X500 | HEADLESS PASS | Headless world initialized; GUI verification pending due to NVML mismatch |
-| QGroundControl connects | PENDING | AppImage launches with `xcb`; MAVLink connection not yet visually verified |
+| Gazebo shows X500 | PASS | GUI confirmed by user after reboot |
+| QGroundControl connects | PASS | QGC running; PX4 log: `[mavlink] partner IP: 127.0.0.1` and `[commander] Ready for takeoff!` |
 | DDS agent connects | PASS | `/fmu/in/*` and `/fmu/out/*` topics present |
 | ROS 2 topics | PASS | `/fmu/out/vehicle_local_position_v1`, `/fmu/out/vehicle_status_v1`, ... |
 | C++ telemetry node builds | PASS | `colcon build`: 3 packages finished |
@@ -206,17 +206,18 @@ Verification: a later short headless session produced a **6.3 KB** `px4_sitl.log
 Failed to initialize NVML: Driver/library version mismatch
 ```
 
-The userspace driver and the loaded kernel module are out of sync, likely after a package update. A reboot is probably required before GUI Gazebo can use the NVIDIA GPU. Headless simulation is the first validation path; the GUI will be rechecked after a reboot if needed.
+The userspace driver and the loaded kernel module were out of sync after a package update. A reboot resolved it: the driver now reports `595.104.02` and the GUI works. Headless simulation remained the reliable first validation path.
 
-### QGroundControl smoke test
+### GUI and QGC verification
 
-The AppImage starts with `QT_QPA_PLATFORM=xcb`. It was stopped after a short smoke test before visual confirmation of the MAVLink connection; no connection evidence was captured from the console log. QGC visual verification remains pending and should be done after the NVIDIA reboot.
+After the reboot, the user confirmed:
 
-### Pending
+- Gazebo GUI displays the X500.
+- QGC connects to PX4.
+- PX4 logs `[mavlink] partner IP: 127.0.0.1` and `[commander] Ready for takeoff!`.
+- The PX4 SITL log remains small (7.7 KB) under the `script` PTY wrapper.
 
-- Reboot to resync the NVIDIA driver/library, then verify the Gazebo GUI shows the X500.
-- Launch QGC and visually confirm the MAVLink connection on UDP 14550.
-- Optionally record the first GUI run in this log.
+**Week 1 acceptance is complete.** Next: Week 2 offboard controller.
 
 ---
 
