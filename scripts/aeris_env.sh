@@ -34,11 +34,23 @@ if [[ -z "$PATH" ]]; then
 fi
 export PATH
 
+# CMake's FindPython3 treats CONDA_PREFIX as a virtual environment and would
+# select conda's Python 3.13 even when PATH is clean. Remove the markers.
+unset CONDA_PREFIX CONDA_DEFAULT_ENV CONDA_PROMPT_MODIFIER CONDA_SHLVL \
+  CONDA_PYTHON_EXE CONDA_EXE _CONDA_EXE _CONDA_ROOT _CE_CONDA
+
 if [[ -n "${PYTHONPATH:-}" ]]; then
   case "$PYTHONPATH" in
     *conda*|*miniforge*|*miniconda*|*anaconda*) unset PYTHONPATH ;;
   esac
 fi
+
+for _aeris_var in CMAKE_PREFIX_PATH PKG_CONFIG_PATH; do
+  if [[ -n "${!_aeris_var:-}" ]]; then
+    export "$_aeris_var=$(_aeris_strip_conda "${!_aeris_var}")"
+  fi
+done
+unset _aeris_var
 
 if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
   LD_LIBRARY_PATH="$(_aeris_strip_conda "$LD_LIBRARY_PATH")"
@@ -51,6 +63,15 @@ if [[ ! -f /opt/ros/jazzy/setup.bash ]]; then
   return 1 2>/dev/null || exit 1
 fi
 
+# ROS 2's generated setup scripts are not nounset-safe (for example,
+# local_setup.sh reads AMENT_PYTHON_EXECUTABLE without a default). Disable
+# `set -u` only while sourcing them, then restore the caller's setting.
+_aeris_nounset_was_set=false
+case "$-" in
+  *u*) _aeris_nounset_was_set=true ;;
+esac
+
+set +u
 # shellcheck disable=SC1091
 source /opt/ros/jazzy/setup.bash
 
@@ -58,6 +79,11 @@ if [[ -f "$AERIS_ROOT/ros2_ws/install/setup.bash" ]]; then
   # shellcheck disable=SC1091
   source "$AERIS_ROOT/ros2_ws/install/setup.bash"
 fi
+
+if [[ "$_aeris_nounset_was_set" == "true" ]]; then
+  set -u
+fi
+unset _aeris_nounset_was_set
 
 export AERIS_ROOT
 export RCUTILS_COLORIZED_OUTPUT="${RCUTILS_COLORIZED_OUTPUT:-1}"

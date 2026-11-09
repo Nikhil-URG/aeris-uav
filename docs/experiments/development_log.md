@@ -107,6 +107,83 @@ Measured message rate: pending.
 
 ---
 
+## 2026-11-09 — Workspace build and environment fixes
+
+### Goal
+
+Complete the first workspace build and start the headless simulation after the initial setup run.
+
+### What had already succeeded
+
+- ROS 2 Jazzy installed.
+- PX4-Autopilot `v1.17.0` at `~/aeris_dev/PX4-Autopilot` (commit `d6f12ad1c4`).
+- Gazebo Harmonic `8.15.0` installed.
+- Micro XRCE-DDS Agent `v2.4.3` installed at `/usr/local/bin/MicroXRCEAgent`.
+- QGroundControl `v5.1.5` AppImage installed.
+- `px4_msgs` submodule at `86d8239` (`v1.17.0`).
+
+### Failure 1 — `AMENT_PYTHON_EXECUTABLE: unbound variable`
+
+Symptom:
+
+```text
+/opt/ros/jazzy/local_setup.sh: line 23: AMENT_PYTHON_EXECUTABLE: unbound variable
+```
+
+Cause: `set -u` (nounset) in the AERIS scripts was inherited by ROS 2's generated setup scripts. `local_setup.sh` reads optional variables such as `AMENT_PYTHON_EXECUTABLE` without defaults. ROS setup scripts are not nounset-safe.
+
+Fix: `scripts/aeris_env.sh` now records whether nounset is enabled, disables it while sourcing `/opt/ros/jazzy/setup.bash` and the workspace setup, then restores the caller's setting.
+
+Verification:
+
+```bash
+bash -c 'set -euo pipefail; source scripts/aeris_env.sh; echo "flags=$-"'
+```
+
+### Failure 2 — CMake selected conda Python
+
+Symptom: the `px4_msgs` build failed inside `rosidl_adapter`:
+
+```text
+execute_process(/home/lucifer/miniforge3/bin/python3 -m rosidl_adapter ...)
+ModuleNotFoundError: No module named 'em'
+```
+
+Cause: cleaning `PATH` was not sufficient. `CONDA_PREFIX` remained set, and CMake's `FindPython3` treats an active conda prefix as a virtual environment. It selected Python 3.13, which does not have ROS 2's `em` module. The generated cache recorded `_Python3_EXECUTABLE:INTERNAL=/home/lucifer/miniforge3/bin/python3`.
+
+Fix: `scripts/aeris_env.sh` now:
+
+- calls `conda deactivate` when the conda shell function is available;
+- strips conda entries from `PATH`, `PYTHONPATH`, `LD_LIBRARY_PATH`, `CMAKE_PREFIX_PATH` and `PKG_CONFIG_PATH`;
+- unsets `CONDA_PREFIX`, `CONDA_DEFAULT_ENV`, `CONDA_SHLVL`, `CONDA_PYTHON_EXE`, `CONDA_EXE`, `_CONDA_EXE`, `_CONDA_ROOT` and `_CE_CONDA`.
+
+The stale build tree was removed (`ros2_ws/build`, `ros2_ws/install`, `ros2_ws/log`) and the clean build succeeded:
+
+```text
+Finished <<< px4_msgs [4min 10s]
+Finished <<< aeris_flight_control [11.5s]
+Finished <<< aeris_bringup [1.24s]
+Summary: 3 packages finished [4min 23s]
+```
+
+### Observation — NVIDIA NVML driver/library mismatch
+
+`nvidia-smi` and `scripts/check_environment.sh` report:
+
+```text
+Failed to initialize NVML: Driver/library version mismatch
+```
+
+The userspace driver and the loaded kernel module are out of sync, likely after a package update. A reboot is probably required before GUI Gazebo can use the NVIDIA GPU. Headless simulation is the first validation path; the GUI will be rechecked after a reboot if needed.
+
+### Pending
+
+- Start `MicroXRCEAgent` + PX4 SITL headless.
+- Verify `/fmu/*` topics and run the telemetry monitor.
+- Record Milestone 1 acceptance results.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

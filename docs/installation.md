@@ -232,16 +232,60 @@ Source the environment:
 source scripts/aeris_env.sh
 ```
 
-### Wrong Python / `ModuleNotFoundError` / colcon import errors
+### `AMENT_PYTHON_EXECUTABLE: unbound variable`
 
-A conda environment is still active. Check:
+Symptom:
+
+```text
+/opt/ros/jazzy/local_setup.sh: line 23: AMENT_PYTHON_EXECUTABLE: unbound variable
+```
+
+Cause: a script enabled `set -u` (nounset) and then sourced ROS 2's generated setup files. `local_setup.sh` reads `AMENT_PYTHON_EXECUTABLE` without a default, which is illegal under nounset. ROS setup scripts are not nounset-safe.
+
+Fix: use `scripts/aeris_env.sh`, which disables nounset only while sourcing `/opt/ros/jazzy/setup.bash` and the workspace setup, then restores the caller's setting. If you source ROS manually inside a `set -u` script, wrap it:
+
+```bash
+set +u
+source /opt/ros/jazzy/setup.bash
+set -u
+```
+
+### Wrong Python / `ModuleNotFoundError: No module named 'em'`
+
+Check the interpreter:
 
 ```bash
 which python3
 python3 --version
 ```
 
-It must be `/usr/bin/python3` and Python 3.12. Re-source `scripts/aeris_env.sh`; if the shell was started from a conda-activated session, the script removes it. Do not run `colcon build` from a conda shell.
+It must be `/usr/bin/python3` and Python 3.12. Re-source `scripts/aeris_env.sh`; if the shell was started from a conda-activated session, the script removes it.
+
+Cleaning `PATH` is not enough for CMake. CMake's `FindPython3` treats `CONDA_PREFIX` as a virtual environment and may select conda's Python 3.13 even when `which python3` is correct. The build then fails with:
+
+```text
+execute_process(/home/lucifer/miniforge3/bin/python3 -m rosidl_adapter ...)
+ModuleNotFoundError: No module named 'em'
+```
+
+`scripts/aeris_env.sh` unsets `CONDA_PREFIX` and the other conda environment markers. If a build already cached the wrong interpreter, remove the build tree and rebuild:
+
+```bash
+rm -rf ros2_ws/build ros2_ws/install ros2_ws/log
+bash scripts/build.sh
+```
+
+The cache entry to look for is `_Python3_EXECUTABLE:INTERNAL` in `ros2_ws/build/<package>/CMakeCache.txt`; it must point to `/usr/bin/python3`.
+
+### NVIDIA NVML driver/library mismatch
+
+Symptom:
+
+```text
+Failed to initialize NVML: Driver/library version mismatch
+```
+
+The loaded NVIDIA kernel module and the userspace driver are out of sync, usually after a system update. Reboot before relying on GPU rendering. Headless simulation (`HEADLESS=1`) may still work for non-rendering scenarios, but camera/depth work will need a healthy GPU stack.
 
 ### `ros2 topic list` is empty
 
@@ -273,13 +317,13 @@ HEADLESS=1 bash scripts/launch_simulation.sh
 
 ### PX4 build fails while installing Python packages
 
-The PX4 setup script is using conda Python. Re-run through the bootstrap script, which sanitizes `PATH`:
+The PX4 setup script is using conda Python. Re-run through the bootstrap script, which sanitizes the conda environment:
 
 ```bash
 bash scripts/bootstrap_px4.sh
 ```
 
-Confirm `python3 --version` is 3.12 before the PX4 setup step.
+Confirm `python3 --version` is 3.12 before the PX4 setup step. If PX4's build cache already contains conda paths, remove `~/aeris_dev/PX4-Autopilot/build` and rebuild the simulation target.
 
 ### QGroundControl AppImage does not start
 
