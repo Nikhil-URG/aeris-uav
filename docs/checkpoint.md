@@ -1,7 +1,7 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-10  
-**Phase:** Post-Week 7 extension complete — city-grid A* navigation and GUI delivered  
+**Phase:** Post-Week 7 extension complete — spread-out city grid and GitHub showcase  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
@@ -11,7 +11,8 @@
 **Week 5 tag:** `week-5-checkpoint` (commit `4237774`)  
 **Week 6 tag:** `week-6-checkpoint` (commit `94e8f02`)  
 **Week 7 tag:** `week-7-checkpoint` (commit `b8c39df`)  
-**Grid extension tag:** `grid-navigation-checkpoint` (this checkpoint commit)  
+**Grid extension tag:** `grid-navigation-checkpoint` (commit `4e292b8`)  
+**Grid layout tag:** `grid-layout-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -91,11 +92,12 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Obstacle benchmark | 3.75 m detection, 1 replan, original waypoint reached |
 | Safety latency | 41–98 ms from fault injection to action dispatch |
 | Evaluator tests | 4/4 |
-| City grid | 11×11 cells, 4 m cells, 12 buildings, 44 occupied cells |
+| City grid (default) | 11×11 cells, 4 m cells, 9 spread buildings, 36 occupied, start `(0,0)` |
 | Grid planner | 8-connected A*, no corner cutting, 9/9 tests |
 | Grid GUI | PyQt5 click-to-goal, live path/drone/progress, 1/1 test |
-| Grid missions | 3/3 complete: `(0,0)`, `(10,10)`, `(2,5)` after `DONE` |
-| Grid clearance | 2.269 m minimum; 0 positions inside buildings |
+| Grid missions (dense map) | 3/3 complete: `(0,0)`, `(10,10)`, `(2,5)` after `DONE` |
+| Grid clearance (dense SITL) | 2.269 m minimum; 0 positions inside buildings |
+| Spread-map paths | 5 goals validated; worst path clearance 2.500 m |
 | Grid evidence | `docs/experiments/grid_*` |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
 | Environment check | `20 ok, 0 warnings, 0 failures` |
@@ -174,6 +176,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │       ├── grid_repeat_goal.jsonl
 │       ├── grid_repeat_short.jsonl
 │       ├── grid_validation.txt
+│       ├── grid_layout_validation.txt
 │       └── plots/
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
@@ -235,6 +238,7 @@ Key Week 2–6 files:
 - `ros2_ws/src/aeris_bringup/config/offboard_grid.yaml`
 - `ros2_ws/src/aeris_bringup/config/safety_grid.yaml`
 - `ros2_ws/src/aeris_bringup/config/grids/city_grid.yaml`
+- `ros2_ws/src/aeris_bringup/config/grids/city_grid_dense.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/inspection_alpha.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/safety_test.yaml`
 - `ros2_ws/src/aeris_bringup/launch/offboard.launch.py`
@@ -266,6 +270,7 @@ Key Week 2–6 files:
 - `docs/experiments/grid_repeat_goal.jsonl`
 - `docs/experiments/grid_repeat_short.jsonl`
 - `docs/experiments/grid_validation.txt`
+- `docs/experiments/grid_layout_validation.txt`
 - `docs/experiments/plots/`
 
 ---
@@ -492,7 +497,7 @@ Click a free cell, or call the service:
 
 ```bash
 ros2 service call /aeris_grid_navigation/set_goal \
-  aeris_interfaces/srv/GridGoal "{x: 0, y: 0}"
+  aeris_interfaces/srv/GridGoal "{x: 10, y: 10}"
 ```
 
 The drone plans the shortest free path, flies to the goal, returns to the
@@ -756,18 +761,19 @@ Evidence: `docs/experiments/benchmark.json`, `docs/experiments/benchmark.csv`, `
 
 | Check | Result |
 |---|---|
-| Grid map | PASS — 11×11, 4 m cells, 12 buildings, 44 occupied |
+| Grid map (default) | PASS — 11×11, 4 m cells, 9 spread buildings, 36 occupied, start `(0,0)` |
 | A* planner | PASS — 9/9 tests, no corner cutting |
 | GUI | PASS — click mapping test, live path/drone/progress |
-| `(0,0)` mission | PASS — 11 cells / 40 m out and return |
-| `(10,10)` mission | PASS — 11 cells / 40 m out and return |
-| Repeat `(2,5)` from `DONE` | PASS — 4 cells / 12 m out and return |
-| Path occupancy | PASS — zero occupied cells in any path |
-| Building clearance | PASS — 2.269 m minimum, zero intrusions |
+| Dense-map SITL `(0,0)` | PASS — 11 cells / 40 m out and return |
+| Dense-map SITL `(10,10)` | PASS — 11 cells / 40 m out and return |
+| Dense-map repeat `(2,5)` from `DONE` | PASS — 4 cells / 12 m out and return |
+| Dense-map path occupancy | PASS — zero occupied cells in any path |
+| Dense-map clearance | PASS — 2.269 m minimum, zero intrusions |
+| Spread-map planner | PASS — 5 goals, worst path clearance 2.500 m |
 | Workspace tests | PASS — 42 ROS + 4 evaluator |
 | Environment check | PASS — 20 ok |
 
-Evidence: `docs/experiments/grid_mission.jsonl`, `docs/experiments/grid_repeat_goal.jsonl`, `docs/experiments/grid_repeat_short.jsonl`, `docs/experiments/grid_validation.txt`, `docs/experiments/plots/grid_gui*.png`.
+Evidence: `docs/experiments/grid_mission.jsonl`, `docs/experiments/grid_repeat_goal.jsonl`, `docs/experiments/grid_repeat_short.jsonl`, `docs/experiments/grid_validation.txt`, `docs/experiments/grid_layout_validation.txt`, `docs/experiments/plots/grid_gui*.png`.
 
 ---
 
@@ -826,15 +832,17 @@ Read these files first:
 - docs/experiments/benchmark.json
 - docs/experiments/grid_mission.jsonl
 - docs/experiments/grid_validation.txt
+- docs/experiments/grid_layout_validation.txt
 
 Current state:
 - All seven weeks and the city-grid navigation extension are complete.
+- Default city map: 11×11, 9 spread 2×2 buildings, 36 occupied cells, start (0,0). `city_grid_dense.yaml` preserves the initial map used for the SITL flight evidence.
 - aeris_flight_control: 20 Hz offboard stream, arm, takeoff to 5 m, HOLD/TRANSIT/RTL/LAND, go_to/hold/land/rtl/abort, FlightStatus at 10 Hz.
 - aeris_mission_manager: YAML validation, sequential waypoints, RTL, landing, obstacle replanning, safety aborts, JSONL logs; 11/11 tests pass.
 - aeris_perception: downward mono camera, OpenCV red-panel detection, 4/4 tests; 2/2 detections at inspection waypoints, confidence 1.00.
 - aeris_navigation: 270° lidar sector obstacle map and corridor check, 4/4 tests; obstacle mission logged a 3.75 m detection and detour to (1.54, 1.94).
 - aeris_safety: pose/battery/geofence/heartbeat supervision, fault injection, land/RTL actions, 11/11 tests. All four injected faults were verified in SITL, with 41–98 ms decision latency.
-- aeris_grid_navigation: 11×11 occupancy grid, 8-connected A* with no corner cutting, go-to-goal/return/land executor, 9/9 tests. Three SITL missions completed, including a repeat goal after DONE; minimum building clearance 2.269 m.
+- aeris_grid_navigation: 11×11 occupancy grid, 8-connected A* with no corner cutting, go-to-goal/return/land executor, 9/9 tests. Three dense-map SITL missions completed, including a repeat goal after DONE; minimum flight clearance 2.269 m. Default map is spread out with start (0,0); 5 offline paths validated, worst path clearance 2.500 m.
 - aeris_grid_gui: PyQt5 click-to-goal, path, live drone and progress display, 1/1 headless test.
 - Evaluation: scripts/evaluate_mission.py, 8 recorded runs, benchmark JSON/CSV, two plots, 4 evaluator tests.
 - Workspace total: 42 ROS tests + 4 evaluator tests, 0 failures; environment check 20 ok.
@@ -875,7 +883,8 @@ Current branch: `main`. All checkpoint tags are pushed:
 - `week-5-checkpoint` — Week 5 obstacle avoidance (`4237774`)
 - `week-6-checkpoint` — Week 6 safety supervisor (`94e8f02`)
 - `week-7-checkpoint` — Week 7 evaluation and demo (`b8c39df`)
-- `grid-navigation-checkpoint` — city-grid A* and GUI (this checkpoint)
+- `grid-navigation-checkpoint` — city-grid A* and GUI (`4e292b8`)
+- `grid-layout-checkpoint` — spread-out map, start `(0,0)`, GitHub README (this checkpoint)
 
 Push subsequent changes:
 

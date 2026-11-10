@@ -766,6 +766,53 @@ path smoothing, map editing in the GUI and hardware validation.
 
 ---
 
+## 2026-11-10 — Spread-out city layout, start at (0,0), GitHub README
+
+### Goal
+
+Make the default grid easier to showcase: distribute the buildings across the
+whole city, start the drone at cell `(0,0)`, and present the project with a
+public-facing README.
+
+### Changes
+
+- Replaced the default `city_grid.yaml` with an 11×11 map containing nine
+  evenly spaced 2×2 buildings on a 3×3 lattice.
+- Default start is now `(0,0)`; 121 cells, 36 occupied, 85 free.
+- Preserved the initial dense map as `city_grid_dense.yaml` so the recorded
+  SITL evidence remains reproducible.
+- Increased `max_horizontal_distance_m` to 65 m and the safety geofence to
+  70 m for the far-corner displacement (56.6 m).
+- Added `scripts/render_grid_preview.py` to render a GUI preview from the map
+  and A* path without starting SITL.
+- Rewrote the README for GitHub: badges, hero preview, architecture, feature
+  matrix, quick start, package map, verification results and limitations.
+- Added `docs/experiments/grid_layout_validation.txt` and
+  `docs/experiments/plots/grid_gui_spread.png`.
+
+### Default-layout validation
+
+| Goal from `(0,0)` | Path | Length | Min clearance |
+|---|---|---|---|
+| `(10,10)` | 20 cells | 77.7 m | 2.500 m |
+| `(0,10)` | 11 cells | 40.0 m | 6.500 m |
+| `(10,0)` | 11 cells | 40.0 m | 6.500 m |
+| `(4,4)` | 8 cells | 29.7 m | 2.500 m |
+| `(7,7)` | 14 cells | 53.7 m | 2.500 m |
+
+All paths are free of occupied cells; worst path clearance is 2.500 m. This is
+a geometry/planner validation, not a new SITL flight. The executor was already
+flight-validated on the dense map.
+
+### Notes
+
+- The offboard horizontal limit checks each target's straight-line displacement
+  from takeoff, not the accumulated path length.
+- The user requested a clean slate for running the simulation, so all PX4,
+  Gazebo, DDS agent, ROS and GUI processes were stopped after this change.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

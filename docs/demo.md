@@ -171,7 +171,7 @@ Headless alternative:
 ```bash
 ros2 launch aeris_bringup grid_navigation.launch.py
 ros2 service call /aeris_grid_navigation/set_goal \
-  aeris_interfaces/srv/GridGoal "{x: 0, y: 0}"
+  aeris_interfaces/srv/GridGoal "{x: 10, y: 10}"
 ```
 
 ## 5. Evidence to show

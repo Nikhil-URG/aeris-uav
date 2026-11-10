@@ -16,8 +16,9 @@ aeris_safety:
 
     pose_timeout_s: 1.0
     battery_min_remaining: 0.25
-    # The city grid spans +/-20 m from the start cell; 45 m leaves margin.
-    geofence_radius_m: 45.0
+    # The city grid spans 40 m in each axis; the far corner is ~56.6 m
+    # from the start at (0,0). Keep a margin above that.
+    geofence_radius_m: 70.0
     geofence_center_x: 0.0
     geofence_center_y: 0.0
 

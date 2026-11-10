@@ -1,66 +1,220 @@
-# AERIS — Autonomous UAV Inspection & Reliability System
+<div align="center">
 
-**Repository:** <https://github.com/Nikhil-URG/aeris-uav>
+# AERIS
 
-AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
+### Autonomous UAV Inspection & Reliability System
 
-**Current status:** Post-Week 7 extension complete — city-grid occupancy, A* shortest-path navigation, return-to-start and a live goal-selection GUI are verified in SITL. 46 automated tests pass; four safety faults verified in SITL.
+A simulated industrial-inspection drone built with **PX4**, **ROS 2 Jazzy**, and **Gazebo Harmonic** — with mission autonomy, camera perception, lidar obstacle avoidance, safety supervision, and a click-to-fly city-grid planner.
 
-## Mission
+[![ROS 2](https://img.shields.io/badge/ROS_2-Jazzy-22314E?logo=ros&logoColor=white)](https://docs.ros.org/en/jazzy/)
+[![PX4](https://img.shields.io/badge/PX4-v1.17.0-6C4DFF)](https://github.com/PX4/PX4-Autopilot)
+[![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic_8.15-FF6B35)](https://gazebosim.org/)
+[![Tests](https://img.shields.io/badge/tests-46_passing-2ea44f)](docs/evaluation.md)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
 
-The simulated vehicle will eventually:
+[![AERIS city-grid GUI](docs/experiments/plots/grid_gui_spread.png)](docs/experiments/plots/grid_gui_spread.png)
 
-1. Arm and take off.
-2. Navigate to inspection locations.
-3. Maintain stable position and altitude.
-4. Observe inspection targets with its camera.
-5. Detect and avoid obstacles.
-6. Replan its trajectory when necessary.
-7. Return to its launch position.
-8. Land safely.
-9. Report mission results and failures.
+*Click a free cell. AERIS plans the shortest free path, flies around the buildings, returns to the start cell, and lands.*
 
-PX4 remains responsible for low-level flight stabilization. The ROS 2 application owns mission-level intelligence and sends appropriate setpoints to PX4 over uXRCE-DDS.
+</div>
 
-## Stack
+---
 
-| Layer | Technology |
+## Overview
+
+AERIS is a reproducible robotics software project, not a collection of demo scripts. It pins its flight stack, separates flight control from mission autonomy, records every run as structured JSONL, and validates each layer in simulation.
+
+The architecture follows one rule: **PX4 remains the only component that commands actuators.** ROS 2 owns mission state, planning, perception and safety supervision, and talks to PX4 over uXRCE-DDS.
+
+The current build includes:
+
+- 20 Hz offboard position control: arm, takeoff, hold, transit, RTL and land.
+- A YAML-driven mission manager with validation, waypoint sequencing and JSONL logs.
+- Downward-camera red-target detection using OpenCV.
+- 270° lidar obstacle detection with a reactive lateral replan.
+- An independent safety supervisor with injectable faults and deterministic land/RTL actions.
+- A city-grid planner using 8-connected A* with no corner cutting.
+- A PyQt5 GUI for click-to-goal selection and live drone/path/progress display.
+- 46 automated tests and 20 environment checks.
+
+## Highlights
+
+| Capability | What it does |
 |---|---|
-| Flight controller | PX4-Autopilot v1.17.0 |
-| Autonomy | ROS 2 Jazzy (C++ and Python) |
-| PX4 ↔ ROS 2 bridge | uXRCE-DDS + Micro XRCE-DDS Agent v2.4.3 |
-| Simulation | Gazebo Harmonic, X500 airframe |
-| Ground station | QGroundControl v5.1.5 (optional) |
-| OS target | Ubuntu 24.04 / Pop!_OS 24.04 (noble) |
+| **Flight control** | 20 Hz offboard stream, mode/arm sequencing, takeoff ramp, position hold, RTL, landing, abort |
+| **Mission autonomy** | YAML missions, altitude/geofence validation, waypoint sequencing, inspection holds, RTL, JSONL |
+| **Perception** | Gazebo camera bridge, OpenCV red-panel detection, bearing/range/ground projection |
+| **Obstacle avoidance** | 270° lidar sector map, corridor check, lateral detour, then original waypoint |
+| **Safety** | Pose, battery, geofence and mission-heartbeat monitors; injected faults; land/RTL/hold actions |
+| **City grid** | Occupancy map, A* shortest path, go-to-goal, return-to-start, repeat goals, PyQt5 GUI |
+| **Observability** | JSONL mission logs, benchmark JSON/CSV, plots, structured console evidence |
 
 ## Architecture
 
 ```text
- Gazebo Harmonic / X500
-          │ sensors
-          ▼
- PX4 Autopilot
-   EKF2 → position controller → attitude controller → actuators
-          │ uXRCE-DDS (DDS topics)
-          ▼
- ROS 2 Jazzy
-   ├── aeris_flight_control   (C++)   PX4 interface, offboard control
-   ├── aeris_mission_manager  (Py)    mission state machine
-   ├── aeris_navigation       (C++)   trajectory and obstacle planning
-   ├── aeris_perception       (Py)    camera, OpenCV, target localization
-   ├── aeris_safety           (C++)   health checks and failsafes
-   └── aeris_bringup          (Py)    launch files and configuration
+                    Gazebo Harmonic / X500
+                             │ sensors
+                             ▼
+                    PX4 Autopilot
+        EKF2 → position controller → attitude controller → actuators
+                             │ uXRCE-DDS
+                             ▼
+                       ROS 2 Jazzy
+  ┌──────────────────────────────────────────────────────────────┐
+  │ aeris_flight_control   C++   PX4 interface + offboard control │
+  │ aeris_mission_manager  Py    mission state + JSONL logging    │
+  │ aeris_perception       Py    camera + OpenCV detection        │
+  │ aeris_navigation       C++   lidar obstacles + corridor check │
+  │ aeris_safety           C++   health monitor + safe actions    │
+  │ aeris_grid_navigation  Py    occupancy grid + A* executor     │
+  │ aeris_grid_gui         PyQt5 click-to-goal + live display     │
+  │ aeris_bringup          Py    launch files + configuration     │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
-Design rules:
+**Design rules**
 
 1. PX4 is the only component that commands actuators.
-2. ROS 2 sends high-level setpoints and commands, never motor outputs.
-3. Every external dependency is version-pinned and documented.
-4. Every milestone has a scripted acceptance check.
-5. Logs and experiment results are first-class project artifacts.
+2. ROS 2 sends high-level goals and setpoints, never motor outputs.
+3. Every external dependency is pinned and documented.
+4. Every flight behavior has a scripted acceptance test.
+5. Run artifacts and measurement results are first-class project files.
 
-See [docs/architecture.md](docs/architecture.md) for the full design.
+## City-grid GUI
+
+The default city is an **11 × 11 grid** with 4 m cells and **nine evenly spaced 2 × 2 buildings** (36 occupied cells, 85 free). The drone starts at `(0,0)`, the south-west corner.
+
+- **A\*** uses 8-connected moves, Euclidean heuristic, and blocks diagonal corner cutting.
+- Clicking a free cell plans the shortest free path in real time.
+- The GUI draws buildings, heights, start/goal, the path, the live drone pose, progress and safety state.
+- The drone takes off, follows the path, holds at the goal, plans the return path, lands and disarms.
+- Repeated goals work without restarting the stack.
+- The goal is also available as a ROS service for headless use.
+
+```bash
+ros2 service call /aeris_grid_navigation/set_goal \
+  aeris_interfaces/srv/GridGoal "{x: 10, y: 10}"
+```
+
+See [docs/grid_navigation.md](docs/grid_navigation.md) for the map schema, planner details, GUI behavior and evidence.
+
+## Verification
+
+### Flight scenarios
+
+| Scenario | Result |
+|---|---|
+| Nominal inspection mission | 2/2 waypoints, 3 s holds, RTL, land, `COMPLETE` in ~33.8 s |
+| Perception mission | 2/2 targets detected, confidence 1.00, range ~6.3 m |
+| Obstacle mission | 3.75 m obstacle, one lateral replan to `(1.54, 1.94)`, original waypoint reached |
+| Safety campaign | 4/4 injected faults produced the correct land/RTL action and a disarmed vehicle |
+| Safety decision latency | 41–98 ms from fault injection to action dispatch |
+| Grid missions (dense map) | 3/3 completed, including a repeat goal after `DONE`; 2.269 m minimum flight clearance |
+| Default spread-map planner | 5/5 paths free, worst path clearance 2.500 m |
+
+### Quality gates
+
+| Gate | Result |
+|---|---|
+| ROS package tests | **42/42** |
+| Evaluator tests | **4/4** |
+| Total automated tests | **46 passing** |
+| Environment checks | **20 ok, 0 warnings** |
+| Build | 10 packages |
+
+![Mission duration by run](docs/experiments/plots/mission_durations.png)
+
+Benchmark details, methodology and limitations: [docs/evaluation.md](docs/evaluation.md).
+
+## Packages
+
+| Package | Language | Responsibility |
+|---|---|---|
+| `aeris_interfaces` | ROS 2 msgs/srvs | Flight, mission, safety, detection, obstacle, grid and goal interfaces |
+| `aeris_flight_control` | C++ | PX4 telemetry, offboard stream, mode/arm/takeoff/goal/RTL/land |
+| `aeris_mission_manager` | Python | Mission validation, state machine, replanning, safety aborts, JSONL |
+| `aeris_perception` | Python | Camera bridge, OpenCV detection, target localization |
+| `aeris_navigation` | C++ | Lidar scan analysis, sector obstacles, corridor status |
+| `aeris_safety` | C++ | Pose/battery/geofence/heartbeat monitors, fault injection, safe actions |
+| `aeris_grid_navigation` | Python | Occupancy grid, A* shortest path, go-to-goal/return execution |
+| `aeris_grid_gui` | Python + PyQt5 | Goal selection and live path/drone/progress display |
+| `aeris_bringup` | Python | Launch files, YAML configuration, missions and grid maps |
+
+`px4_msgs` is an external submodule pinned to PX4 `v1.17.0`.
+
+## Quick start
+
+### Prerequisites
+
+- Ubuntu/Pop!_OS 24.04
+- ROS 2 Jazzy
+- PX4-Autopilot `v1.17.0`
+- Gazebo Harmonic
+- QGroundControl
+- Python 3.12
+
+The full bootstrap script installs the system toolchain, PX4, Gazebo and the Micro XRCE-DDS Agent:
+
+```bash
+git clone --recursive https://github.com/Nikhil-URG/aeris-uav.git
+cd aeris-uav
+bash scripts/setup.sh
+source scripts/aeris_env.sh
+bash scripts/check_environment.sh
+```
+
+QGroundControl is optional to install but required for arming in this SITL setup:
+
+```bash
+bash scripts/install_qgroundcontrol.sh
+scripts/run_qgroundcontrol.sh
+```
+
+### City-grid demo
+
+```bash
+# Terminal A — lightweight airframe, no camera
+source scripts/aeris_env.sh
+PX4_SIM_MODEL=gz_x500 bash scripts/launch_simulation.sh
+
+# Terminal B — spawn the spread-out city
+source scripts/aeris_env.sh
+bash scripts/spawn_grid.sh
+
+# Terminal C — stack + GUI
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup grid_demo.launch.py
+```
+
+Click a free cell in the GUI. For headless operation:
+
+```bash
+ros2 launch aeris_bringup grid_navigation.launch.py
+ros2 service call /aeris_grid_navigation/set_goal \
+  aeris_interfaces/srv/GridGoal "{x: 10, y: 10}"
+```
+
+### Inspection mission demo
+
+```bash
+# Terminal A — camera airframe
+source scripts/aeris_env.sh
+PX4_SIM_MODEL=gz_x500_mono_cam_down bash scripts/launch_simulation.sh
+bash scripts/spawn_targets.sh
+
+# Terminal B — camera bridge + perception
+ros2 launch aeris_bringup perception.launch.py
+
+# Terminal C — mission stack
+ros2 launch aeris_bringup mission.launch.py
+
+# Terminal D — start
+ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
+```
+
+The default mission takes off, visits two inspection waypoints, records target detections, returns to launch and lands. See [docs/demo.md](docs/demo.md) for the full runbook and safety demo.
+
+> **Simulation note:** use `gz_x500` for the city-grid demo. The camera + large city world caused the Gazebo server to crash during a long flight in this environment; the grid demo does not need the camera.
 
 ## Repository layout
 
@@ -68,344 +222,93 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 .
 ├── README.md
 ├── LICENSE
-├── .gitignore
-├── .gitmodules                  # px4_msgs, pinned to v1.17.0
-├── claude.md                    # Original project brief
 ├── docs/
-│   ├── architecture.md
-│   ├── installation.md
-│   ├── flight_control.md
-│   ├── mission_design.md
-│   ├── perception.md
-│   ├── navigation.md
-│   ├── safety.md
-│   ├── evaluation.md
-│   ├── demo.md
-│   ├── grid_navigation.md
-│   ├── checkpoint.md
-│   └── experiments/
-│       ├── development_log.md
-│       ├── week2_offboard_run.log
-│       ├── week3_mission.jsonl
-│       ├── week3_mission_run.log
-│       ├── week4_mission.jsonl
-│       ├── week4_mission_run.log
-│       ├── week4_perception.log
-│       ├── week5_mission.jsonl
-│       ├── week5_mission_run.log
-│       ├── week5_navigation.log
-│       ├── week6_nominal_mission.jsonl
-│       ├── week6_stale_pose_mission.jsonl
-│       ├── week6_low_battery_mission.jsonl
-│       ├── week6_geofence_breach_mission.jsonl
-│       ├── week6_mission_heartbeat_loss_mission.jsonl
-│       ├── week6_*_run.log / week6_*_safety.log
-│       ├── benchmark.json / benchmark.csv
-│       ├── grid_mission.jsonl
-│       ├── grid_repeat_goal.jsonl
-│       ├── grid_repeat_short.jsonl
-│       ├── grid_validation.txt
-│       └── plots/
-├── px4/
-│   └── README.md                # Upstream PX4 pin and setup notes
-├── ros2_ws/
-│   └── src/
-│       ├── px4_msgs/            # Git submodule (PX4 v1.17.0 messages)
-│       ├── aeris_interfaces/    # AERIS messages and services
-│       ├── aeris_flight_control/
-│       ├── aeris_mission_manager/
-│       ├── aeris_perception/
-│       ├── aeris_navigation/
-│       ├── aeris_safety/
-│       ├── aeris_grid_navigation/
-│       ├── aeris_grid_gui/
-│       └── aeris_bringup/
+│   ├── architecture.md          # layers, frames, interfaces, ADRs
+│   ├── installation.md          # setup + troubleshooting
+│   ├── flight_control.md        # offboard contract and results
+│   ├── mission_design.md        # mission schema and state machine
+│   ├── perception.md            # camera + OpenCV
+│   ├── navigation.md            # lidar + reactive replan
+│   ├── safety.md                # supervisor, faults, failsafes
+│   ├── grid_navigation.md       # city grid, A*, GUI
+│   ├── evaluation.md            # benchmarks, metrics, limitations
+│   ├── demo.md                  # demo runbook + video storyboard
+│   ├── checkpoint.md            # portable handoff
+│   └── experiments/             # JSONL logs, plots, evidence
+├── ros2_ws/src/
+│   ├── aeris_interfaces/
+│   ├── aeris_flight_control/
+│   ├── aeris_mission_manager/
+│   ├── aeris_perception/
+│   ├── aeris_navigation/
+│   ├── aeris_safety/
+│   ├── aeris_grid_navigation/
+│   ├── aeris_grid_gui/
+│   ├── aeris_bringup/
+│   └── px4_msgs/                # submodule, PX4 v1.17.0
 ├── simulation/
+│   ├── models/                  # inspection target, obstacle
 │   ├── worlds/
-│   ├── models/
 │   └── scenarios/
-├── scripts/
-│   ├── setup.sh
-│   ├── aeris_env.sh
-│   ├── install_dependencies.sh
-│   ├── bootstrap_px4.sh
-│   ├── install_microxrce_agent.sh
-│   ├── install_qgroundcontrol.sh
-│   ├── build.sh
-│   ├── launch_simulation.sh
-│   ├── run_qgroundcontrol.sh
-│   ├── spawn_targets.sh
-│   ├── spawn_obstacle.sh
-│   ├── spawn_grid.sh
-│   ├── spawn_buildings.py
-│   ├── run_safety_fault_test.sh
-│   ├── check_environment.sh
-│   └── evaluate_mission.py      # JSONL metrics, CSV and plots
-├── tests/
-│   ├── test_evaluate_mission.py
-│   ├── integration/
-│   └── scenarios/
-└── results/
-    ├── logs/
-    ├── plots/
-    └── reports/
+├── scripts/                     # setup, build, launch, spawn, evaluate
+├── tests/                       # evaluator tests
+└── results/                     # ignored runtime logs/plots/reports
 ```
 
-## Version pins
-
-| Component | Pin | Upstream commit |
-|---|---|---|
-| PX4-Autopilot | `v1.17.0` | `d6f12ad1c4f70ad3230afd7d86e971421e02fef4` |
-| px4_msgs | `v1.17.0` / `release/1.17` | `86d8239e962f6939e05c3737784f60c02fa884db` |
-| Micro XRCE-DDS Agent | `v2.4.3` | `73622810d984349b80bbac0ef55fc0b694d62222` |
-| QGroundControl | `v5.1.5` | — |
-| ROS 2 | Jazzy | Ubuntu `noble` packages |
-
-PX4-Autopilot lives outside this repository at `~/aeris_dev/PX4-Autopilot` by default. The exact upstream commit is recorded in [px4/README.md](px4/README.md).
-
-## Quick start
-
-Run the one-time setup as your **normal user** (the scripts request `sudo` internally):
-
-```bash
-bash scripts/setup.sh
-```
-
-Or run the stages individually:
-
-```bash
-bash scripts/install_dependencies.sh   # system tools + ROS 2 Jazzy
-bash scripts/bootstrap_px4.sh           # PX4 v1.17.0 + Gazebo Harmonic
-bash scripts/install_microxrce_agent.sh
-bash scripts/build.sh                   # builds px4_msgs + AERIS packages
-```
-
-Run the simulation in one terminal:
-
-```bash
-bash scripts/launch_simulation.sh
-```
-
-Run the telemetry monitor in another:
-
-```bash
-source scripts/aeris_env.sh
-ros2 launch aeris_bringup telemetry.launch.py
-```
-
-Optional ground station:
-
-```bash
-bash scripts/install_qgroundcontrol.sh
-scripts/run_qgroundcontrol.sh
-```
-
-## Offboard flight demo
-
-With the simulation and QGC running:
-
-```bash
-source scripts/aeris_env.sh
-ros2 launch aeris_bringup offboard.launch.py
-```
-
-In another terminal, trigger the mission:
-
-```bash
-ros2 service call /aeris_offboard_controller/start std_srvs/srv/Trigger
-```
-
-The controller waits for a valid pose and preflight checks, streams offboard setpoints at 20 Hz, requests offboard mode, arms, climbs to 5 m, holds for 10 s, lands and disarms. A controlled abort is available:
-
-```bash
-ros2 service call /aeris_offboard_controller/abort std_srvs/srv/Trigger
-```
-
-Do not interact with QGC during an automated run unless you intend to exercise the external-land/abort path. Flight evidence is in [docs/experiments/week2_offboard_run.log](docs/experiments/week2_offboard_run.log).
-
-## Full mission demo
-
-The mission launch starts telemetry, the offboard controller and the Python mission manager:
-
-```bash
-source scripts/aeris_env.sh
-ros2 launch aeris_bringup mission.launch.py
-```
-
-In another terminal:
-
-```bash
-ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
-```
-
-The default mission (`inspection_alpha`) takes off, visits two inspection waypoints, holds at each, returns to launch and lands. Each run writes a structured event log to `results/logs/<run_id>/mission.jsonl`.
-
-Mission evidence: [docs/experiments/week3_mission.jsonl](docs/experiments/week3_mission.jsonl).
-
-## Perception demo
-
-Use the camera-enabled airframe:
-
-```bash
-PX4_SIM_MODEL=gz_x500_mono_cam_down bash scripts/launch_simulation.sh
-```
-
-Spawn the two red inspection targets:
-
-```bash
-bash scripts/spawn_targets.sh
-```
-
-Start the Gazebo camera bridge and the OpenCV perception node:
-
-```bash
-source scripts/aeris_env.sh
-ros2 launch aeris_bringup perception.launch.py
-```
-
-The perception stack publishes `/aeris/perception/detections`; the mission manager records `target_detected` events during INSPECT. See [docs/perception.md](docs/perception.md) and [docs/experiments/week4_mission.jsonl](docs/experiments/week4_mission.jsonl).
-
-## Obstacle-avoidance demo
-
-Use the lidar airframe:
-
-```bash
-PX4_SIM_MODEL=gz_x500_lidar_2d bash scripts/launch_simulation.sh
-```
-
-Spawn the tall obstacle on the wp_01 → wp_02 path:
-
-```bash
-bash scripts/spawn_obstacle.sh
-```
-
-Start the lidar bridge and navigation node:
-
-```bash
-source scripts/aeris_env.sh
-ros2 launch aeris_bringup navigation.launch.py
-```
-
-Run the mission as above. The mission manager logs `obstacle_detected` and `replan`, flies a lateral detour, then continues to the original waypoint. See [docs/navigation.md](docs/navigation.md) and [docs/experiments/week5_mission.jsonl](docs/experiments/week5_mission.jsonl).
-
-## Safety and fault injection
-
-Start the mission stack and the safety supervisor:
-
-```bash
-source scripts/aeris_env.sh
-MISSION_FILE=$(ros2 pkg prefix aeris_bringup)/share/aeris_bringup/config/missions/safety_test.yaml
-ros2 launch aeris_bringup mission.launch.py mission_file:="$MISSION_FILE"
-ros2 launch aeris_bringup safety.launch.py
-```
-
-Start the mission, then inject a fault during the inspection hold:
-
-```bash
-ros2 service call /aeris_mission_manager/start std_srvs/srv/Trigger
-ros2 service call /aeris_safety/inject_fault aeris_interfaces/srv/InjectFault \
-  "{fault: low_battery, enable: true}"
-```
-
-The supervisor publishes `/aeris/safety/status` and commands `land` for stale pose or `rtl` for low battery, geofence breach and mission-heartbeat loss. The mission manager records `safety_abort` and stops sequencing. A one-command scenario runner is available:
-
-```bash
-bash scripts/run_safety_fault_test.sh stale_pose
-```
-
-See [docs/safety.md](docs/safety.md) and the `docs/experiments/week6_*` evidence.
-
-## Evaluation
-
-The evaluator turns mission JSONL logs into benchmark metrics, a CSV and plots:
-
-```bash
-source scripts/aeris_env.sh
-python3 scripts/evaluate_mission.py \
-  --json docs/experiments/benchmark.json \
-  --csv docs/experiments/benchmark.csv \
-  --plot-dir docs/experiments/plots
-python3 -m pytest tests/test_evaluate_mission.py -q
-```
-
-Recorded benchmark results:
-
-- 8 authoritative run logs (nominal, perception, obstacle, safety nominal,
-  four fault scenarios);
-- 4/4 completed missions and 4/4 safe fault outcomes;
-- 100% detection rate at both inspection waypoints, mean confidence 1.00;
-- obstacle detected at 3.75 m, one lateral replan, original waypoint reached;
-- safety actions dispatched 41–98 ms after fault injection;
-- 42 ROS tests + 4 evaluator tests, 0 failures.
-
-Read the full report in [docs/evaluation.md](docs/evaluation.md), the plots in
-`docs/experiments/plots/`, and the reproducible demo runbook in
-[docs/demo.md](docs/demo.md).
-
-## City-grid navigation and GUI
-
-The city-grid extension adds occupied building cells, A* shortest-path
-planning, a go-to-goal-and-return mission, and a PyQt5 GUI.
-
-Start the lightweight simulation and spawn the city:
-
-```bash
-source scripts/aeris_env.sh
-PX4_SIM_MODEL=gz_x500 bash scripts/launch_simulation.sh
-bash scripts/spawn_grid.sh
-```
-
-Launch the full stack and GUI:
-
-```bash
-ros2 launch aeris_bringup grid_demo.launch.py
-```
-
-Click any free cell in the GUI. The drone plans the shortest free path, flies
-to the goal, returns to the start cell and lands. The GUI shows buildings, the
-path, live drone position, progress and safety state. A service interface is
-also available:
-
-```bash
-ros2 service call /aeris_grid_navigation/set_goal \
-  aeris_interfaces/srv/GridGoal "{x: 0, y: 0}"
-```
-
-Validation: three missions (two 40 m corner runs and one 12 m repeat goal),
-all paths free of occupied cells, minimum building clearance 2.269 m, all
-flights returned to start and disarmed. See
-[docs/grid_navigation.md](docs/grid_navigation.md) and the
-`docs/experiments/grid_*` evidence.
-
-Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
-
-## Resuming the project
-
-Read [docs/checkpoint.md](docs/checkpoint.md) for the current state, verified results, environment details, and a copy-paste resume prompt. It is written so a new session — on any machine — can continue without reconstructing context from chat history.
-
-## Development workflow
-
-```bash
-source scripts/aeris_env.sh   # keeps conda out of the ROS/PX4 shell
-bash scripts/build.sh
-bash scripts/check_environment.sh
-```
-
-The environment script is required because this machine has Miniforge first in `PATH`. ROS 2 Jazzy and PX4 SITL must use the system Python 3.12.
-
-## Roadmap
-
-| Week | Deliverable | Status |
-|---|---|---|
-| 1 | PX4 SITL + Gazebo + QGC + uXRCE-DDS + telemetry monitor | Complete |
-| 2 | C++ offboard controller: readiness, arm, takeoff, hold, land | Complete |
-| 3 | Mission manager: state machine, waypoints, validation, logging | Complete |
-| 4 | Perception: camera, OpenCV, target detection and localization | Complete |
-| 5 | Navigation: depth camera, obstacle detection, local replanning | Complete |
-| 6 | Safety: fault injection, failsafes, RTL, automated tests | Complete |
-| 7 | Evaluation: benchmarks, experiment reports, demo | Complete |
-| 8 | Extension: city grid, A* shortest path, goal-selection GUI | Complete |
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/architecture.md](docs/architecture.md) | Layer boundaries, coordinate frames, interfaces, ADRs |
+| [docs/installation.md](docs/installation.md) | Full setup, dependencies, troubleshooting |
+| [docs/flight_control.md](docs/flight_control.md) | Offboard controller state machine and services |
+| [docs/mission_design.md](docs/mission_design.md) | Mission schema, validation, state machine |
+| [docs/perception.md](docs/perception.md) | Camera bridge, detector, localization |
+| [docs/navigation.md](docs/navigation.md) | Lidar obstacles, corridor check, detour |
+| [docs/safety.md](docs/safety.md) | Safety supervisor, fault injection, safe actions |
+| [docs/grid_navigation.md](docs/grid_navigation.md) | City grid, A*, GUI and evidence |
+| [docs/evaluation.md](docs/evaluation.md) | Benchmarks, metrics, plots, validity threats |
+| [docs/demo.md](docs/demo.md) | Terminal-by-terminal demo and video storyboard |
+| [docs/checkpoint.md](docs/checkpoint.md) | Portable project handoff and resume prompt |
+
+## Engineering notes
+
+- **Pinned stack:** PX4 `v1.17.0`, `px4_msgs` `v1.17.0`, Gazebo `8.15.0`, uXRCE-DDS Agent `v2.4.3`, QGC `5.1.5`.
+- **Conda isolation:** `scripts/aeris_env.sh` keeps conda's Python 3.13 out of the ROS shell and sets `PYTHONNOUSERSITE=1` so apt OpenCV/NumPy work.
+- **Simulation battery:** `launch_simulation.sh` keeps the SITL battery healthy for deterministic test campaigns; safety battery faults are injected in ROS.
+- **No actuator shortcuts:** every autonomous action goes through `aeris_flight_control`.
+- **Evidence first:** each run writes JSONL; the evaluator produces reproducible JSON/CSV/plots.
+
+## Limitations
+
+- Simulation only; no hardware flight is claimed.
+- Perception localization is approximate (nadir-camera ground projection).
+- The grid is 2D and static; buildings are axis-aligned blocks.
+- Benchmark results are representative runs, not a Monte Carlo study.
+- The camera + city world was unstable in this environment; the grid demo uses the camera-less airframe.
+- The demo video is not checked in; the runbook and storyboard are.
+
+## Project status
+
+| Milestone | Status |
+|---|---|
+| Week 1 — PX4, Gazebo, ROS 2 telemetry | Complete |
+| Week 2 — offboard flight | Complete |
+| Week 3 — mission manager | Complete |
+| Week 4 — camera perception | Complete |
+| Week 5 — lidar obstacle avoidance | Complete |
+| Week 6 — safety and failsafes | Complete |
+| Week 7 — evaluation and demo | Complete |
+| Extension — city grid, A*, GUI | Complete |
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).
+
+---
+
+<div align="center">
+
+**AERIS** — built as a reproducible PX4 + ROS 2 autonomy portfolio project.
+
+</div>

@@ -1,0 +1,9 @@
+grid=city_grid size=11x11 cell=4.0 m
+start=(0,0) buildings=9 occupied=36 free=85
+path start->(10,10): cells=20 length_m=77.7 min_clearance_m=2.500
+path start->(0,10): cells=11 length_m=40.0 min_clearance_m=6.500
+path start->(10,0): cells=11 length_m=40.0 min_clearance_m=6.500
+path start->(4,4): cells=8 length_m=29.7 min_clearance_m=2.500
+path start->(7,7): cells=14 length_m=53.7 min_clearance_m=2.500
+worst_path_clearance_m=2.500
+validation=PASS

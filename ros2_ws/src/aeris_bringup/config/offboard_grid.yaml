@@ -21,7 +21,8 @@ aeris_offboard_controller:
     position_tolerance_m: 0.3
     takeoff_speed_mps: 1.0
     max_altitude_m: 10.0
-    max_horizontal_distance_m: 40.0
+    # The 11x11 grid spans 40 m in each axis; the diagonal is ~56.6 m.
+    max_horizontal_distance_m: 65.0
     max_hold_error_m: 1.0
     telemetry_timeout_s: 1.0
     abort_grace_s: 2.0
