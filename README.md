@@ -1,5 +1,12 @@
 <div align="center">
 
+<img src="docs/experiments/media/aeris_demo.gif" alt="AERIS drone navigating the city grid and returning to start" width="900">
+
+**Live demo:** click a free cell — A* plans around the buildings, the drone returns to the start cell and lands.  
+[Watch the full 2:20 recording](docs/experiments/media/aeris_demo.mp4)
+
+<br>
+
 # AERIS
 
 ### Autonomous UAV Inspection & Reliability System
@@ -11,10 +18,6 @@ A simulated industrial-inspection drone built with **PX4**, **ROS 2 Jazzy**, and
 [![Gazebo](https://img.shields.io/badge/Gazebo-Harmonic_8.15-FF6B35)](https://gazebosim.org/)
 [![Tests](https://img.shields.io/badge/tests-46_passing-2ea44f)](docs/evaluation.md)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](LICENSE)
-
-[![AERIS city-grid GUI](docs/experiments/plots/grid_gui_spread.png)](docs/experiments/plots/grid_gui_spread.png)
-
-*Click a free cell. AERIS plans the shortest free path, flies around the buildings, returns to the start cell, and lands.*
 
 </div>
 
@@ -83,6 +86,10 @@ The current build includes:
 ## City-grid GUI
 
 The default city is an **11 × 11 grid** with 4 m cells and **nine evenly spaced 2 × 2 buildings** (36 occupied cells, 85 free). The drone starts at `(0,0)`, the south-west corner.
+
+![Default city-grid GUI](docs/experiments/plots/grid_gui_spread.png)
+
+*The clean default-map preview. The demo GIF above is the live SITL recording.*
 
 - **A\*** uses 8-connected moves, Euclidean heuristic, and blocks diagonal corner cutting.
 - Clicking a free cell plans the shortest free path in real time.
@@ -234,7 +241,7 @@ The default mission takes off, visits two inspection waypoints, records target d
 │   ├── evaluation.md            # benchmarks, metrics, limitations
 │   ├── demo.md                  # demo runbook + video storyboard
 │   ├── checkpoint.md            # portable handoff
-│   └── experiments/             # JSONL logs, plots, evidence
+│   └── experiments/             # JSONL logs, plots, media, evidence
 ├── ros2_ws/src/
 │   ├── aeris_interfaces/
 │   ├── aeris_flight_control/
@@ -286,7 +293,7 @@ The default mission takes off, visits two inspection waypoints, records target d
 - The grid is 2D and static; buildings are axis-aligned blocks.
 - Benchmark results are representative runs, not a Monte Carlo study.
 - The camera + city world was unstable in this environment; the grid demo uses the camera-less airframe.
-- The demo video is not checked in; the runbook and storyboard are.
+- The checked-in demo is a screen recording of the SITL GUI and Gazebo; there is no hardware footage.
 
 ## Project status
 

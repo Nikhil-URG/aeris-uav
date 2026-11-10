@@ -219,8 +219,8 @@ and the demo runbook in [demo.md](demo.md).
 - **The grid demo uses the non-camera airframe.** The camera + large city world
   caused a Gazebo server crash during a long flight in this environment; the
   grid feature uses `gz_x500`, which is stable and sufficient for navigation.
-- **Demo video is not checked in.** A recording runbook and expected outputs
-  are provided instead; recording is an operator step.
+- **The demo video is a screen recording.** It documents the SITL GUI and
+  Gazebo; it is not hardware footage.
 
 ## 8. Conclusion
 
@@ -239,5 +239,6 @@ obstacle-avoidance and safety scenarios:
 - 46 automated tests (42 ROS + 4 evaluator) and 20 environment checks passed.
 
 The remaining gaps are the expected ones for a simulated prototype:
-statistical repetition, hardware validation, calibrated perception, and a
-recorded demo video.
+statistical repetition, hardware validation and calibrated perception. A
+screen-recorded SITL demo is checked in at
+`docs/experiments/media/aeris_demo.mp4` and embedded in the README.

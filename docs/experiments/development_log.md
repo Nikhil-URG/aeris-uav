@@ -813,6 +813,34 @@ flight-validated on the dense map.
 
 ---
 
+## 2026-11-11 — Demo video embedded as README hero
+
+### Goal
+
+Put the recorded city-grid demo at the very top of the GitHub README.
+
+### Assets
+
+| Asset | Details |
+|---|---|
+| `docs/experiments/media/aeris_demo.gif` | 900×506, 8 fps, 6× speed, 13.4 s, 8.1 MiB |
+| `docs/experiments/media/aeris_demo.mp4` | 1280×720, 30 fps, 2:20, H.264, 3.2 MiB |
+| `docs/experiments/media/aeris_demo_full.mkv` | Original 1280×720, 60 fps, 7.4 MiB |
+
+The GIF trims the setup and shows the mission from path planning through
+transit, return and landing. The README embeds the GIF first, then the title
+and badges, with a link to the full MP4.
+
+### Notes
+
+- The original MKV was moved from the repository root into
+  `docs/experiments/media/`.
+- The GIF is under the 10 MiB README image budget.
+- The full MP4 is browser-playable and keeps the complete recording.
+- All simulation processes were stopped before publishing the video change.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

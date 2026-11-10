@@ -1,7 +1,7 @@
 # AERIS Checkpoint
 
 **Checkpoint date:** 2026-11-10  
-**Phase:** Post-Week 7 extension complete — spread-out city grid and GitHub showcase  
+**Phase:** Post-Week 7 extension complete — city grid, GUI and demo video showcase  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
@@ -12,7 +12,8 @@
 **Week 6 tag:** `week-6-checkpoint` (commit `94e8f02`)  
 **Week 7 tag:** `week-7-checkpoint` (commit `b8c39df`)  
 **Grid extension tag:** `grid-navigation-checkpoint` (commit `4e292b8`)  
-**Grid layout tag:** `grid-layout-checkpoint` (this checkpoint commit)  
+**Grid layout tag:** `grid-layout-checkpoint` (commit `274d584`)  
+**Demo video tag:** `demo-video-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -99,6 +100,7 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Grid clearance (dense SITL) | 2.269 m minimum; 0 positions inside buildings |
 | Spread-map paths | 5 goals validated; worst path clearance 2.500 m |
 | Grid evidence | `docs/experiments/grid_*` |
+| Demo video | GIF hero + full MP4 + original MKV in `docs/experiments/media/` |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
 | Environment check | `20 ok, 0 warnings, 0 failures` |
 
@@ -177,6 +179,10 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │       ├── grid_repeat_short.jsonl
 │       ├── grid_validation.txt
 │       ├── grid_layout_validation.txt
+│       ├── media/
+│       │   ├── aeris_demo.gif
+│       │   ├── aeris_demo.mp4
+│       │   └── aeris_demo_full.mkv
 │       └── plots/
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
@@ -271,6 +277,9 @@ Key Week 2–6 files:
 - `docs/experiments/grid_repeat_short.jsonl`
 - `docs/experiments/grid_validation.txt`
 - `docs/experiments/grid_layout_validation.txt`
+- `docs/experiments/media/aeris_demo.gif`
+- `docs/experiments/media/aeris_demo.mp4`
+- `docs/experiments/media/aeris_demo_full.mkv`
 - `docs/experiments/plots/`
 
 ---
@@ -475,7 +484,8 @@ python3 -m pytest tests/test_evaluate_mission.py -q
 ```
 
 The full report is `docs/evaluation.md`; the terminal-by-terminal demo and
-video storyboard are `docs/demo.md`.
+video storyboard are `docs/demo.md`. The recorded SITL demo is embedded at the
+top of the README and stored in `docs/experiments/media/`.
 
 ### 5.12 City-grid navigation demo
 
@@ -798,7 +808,7 @@ Future work, in priority order:
 3. Calibrate camera extrinsics and replace the approximate ground projection.
 4. Extend the grid planner with dynamic obstacles, 3D costs and path smoothing.
 5. Add map editing and mission history to the GUI.
-6. Record and publish the demo video using `docs/demo.md`.
+6. Record a hardware demo to complement the checked-in SITL video.
 7. Add CI for the build, ROS tests, evaluator tests and environment checks.
 
 ---
@@ -833,6 +843,7 @@ Read these files first:
 - docs/experiments/grid_mission.jsonl
 - docs/experiments/grid_validation.txt
 - docs/experiments/grid_layout_validation.txt
+- docs/experiments/media/aeris_demo.mp4
 
 Current state:
 - All seven weeks and the city-grid navigation extension are complete.
@@ -844,6 +855,7 @@ Current state:
 - aeris_safety: pose/battery/geofence/heartbeat supervision, fault injection, land/RTL actions, 11/11 tests. All four injected faults were verified in SITL, with 41–98 ms decision latency.
 - aeris_grid_navigation: 11×11 occupancy grid, 8-connected A* with no corner cutting, go-to-goal/return/land executor, 9/9 tests. Three dense-map SITL missions completed, including a repeat goal after DONE; minimum flight clearance 2.269 m. Default map is spread out with start (0,0); 5 offline paths validated, worst path clearance 2.500 m.
 - aeris_grid_gui: PyQt5 click-to-goal, path, live drone and progress display, 1/1 headless test.
+- Demo video: full SITL recording checked in as MP4/MKV; README uses an 8 MiB, 13 s speed-up GIF as the hero.
 - Evaluation: scripts/evaluate_mission.py, 8 recorded runs, benchmark JSON/CSV, two plots, 4 evaluator tests.
 - Workspace total: 42 ROS tests + 4 evaluator tests, 0 failures; environment check 20 ok.
 - Perception uses gz_x500_mono_cam_down; navigation uses gz_x500_lidar_2d; the grid demo uses gz_x500 (camera + city world was unstable); ros_gz_bridge is installed.
@@ -853,7 +865,7 @@ Current state:
 - Always run `source scripts/aeris_env.sh` before ROS/PX4 commands; it keeps conda's Python 3.13 out of the ROS shell.
 - Never pipe PX4's interactive console through tee; launch_simulation.sh uses `script` for PTY logging.
 
-No further milestone is required. If extending the project, start with the future-work list in docs/checkpoint.md §8: repeated trials, hardware/HITL, calibrated perception, dynamic/3D grid planning, GUI map editing, demo video and CI.
+No further milestone is required. If extending the project, start with the future-work list in docs/checkpoint.md §8: repeated trials, hardware/HITL, calibrated perception, dynamic/3D grid planning, GUI map editing, a hardware demo and CI.
 
 Before changing code, run:
   source scripts/aeris_env.sh
@@ -884,7 +896,8 @@ Current branch: `main`. All checkpoint tags are pushed:
 - `week-6-checkpoint` — Week 6 safety supervisor (`94e8f02`)
 - `week-7-checkpoint` — Week 7 evaluation and demo (`b8c39df`)
 - `grid-navigation-checkpoint` — city-grid A* and GUI (`4e292b8`)
-- `grid-layout-checkpoint` — spread-out map, start `(0,0)`, GitHub README (this checkpoint)
+- `grid-layout-checkpoint` — spread-out map, start `(0,0)`, GitHub README (`274d584`)
+- `demo-video-checkpoint` — demo video embedded as README hero (this checkpoint)
 
 Push subsequent changes:
 

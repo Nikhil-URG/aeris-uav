@@ -186,12 +186,28 @@ ros2 service call /aeris_grid_navigation/set_goal \
 | Grid missions | `docs/experiments/grid_*mission.jsonl` |
 | Grid validation | `docs/experiments/grid_validation.txt` |
 | GUI screenshot | `docs/experiments/plots/grid_gui_repeat.png` |
+| Demo video (MP4) | `docs/experiments/media/aeris_demo.mp4` |
+| README hero GIF | `docs/experiments/media/aeris_demo.gif` |
+| Original recording | `docs/experiments/media/aeris_demo_full.mkv` |
 | Benchmark metrics | `docs/experiments/benchmark.json` |
 | Plots | `docs/experiments/plots/` |
 | Evaluation report | `docs/evaluation.md` |
 | Grid design | `docs/grid_navigation.md` |
 
-## 6. Demo video storyboard
+## 6. Recorded demo and storyboard
+
+The checked-in SITL recording shows the city-grid GUI and Gazebo side by side:
+goal selection, A* path, transit, return to start, and landing.
+
+- **README hero:** `docs/experiments/media/aeris_demo.gif` — 900×506, 6× speed,
+  13 s (8.1 MiB)
+- **Full video:** `docs/experiments/media/aeris_demo.mp4` — 1280×720,
+  30 fps, 2:20, H.264 (3.2 MiB)
+- **Original recording:** `docs/experiments/media/aeris_demo_full.mkv` —
+  1280×720, 60 fps (7.4 MiB)
+
+The GIF is trimmed to the mission and sped up for README loading. The MP4 is
+the full recording for detailed review.
 
 | Scene | Duration | Content |
 |---|---|---|

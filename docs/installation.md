@@ -335,7 +335,8 @@ python3 -m pytest tests/test_evaluate_mission.py -q
 ```
 
 The full report is [evaluation.md](evaluation.md); the reproducible demo and
-video storyboard are [demo.md](demo.md).
+video storyboard are [demo.md](demo.md). The recorded SITL demo is embedded at
+the top of the README and stored in `docs/experiments/media/`.
 
 ### City-grid navigation GUI
 
