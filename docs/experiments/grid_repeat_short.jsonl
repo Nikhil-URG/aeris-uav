@@ -1,0 +1,27 @@
+{"timestamp": "2026-11-10T09:56:54.628081+00:00", "event": "grid_loaded", "grid": "city_grid", "width": 11, "height": 11, "cell_size_m": 4.0, "buildings": 12}
+{"timestamp": "2026-11-10T09:56:54.628436+00:00", "event": "goal_selected", "grid": "city_grid", "x": 2, "y": 5}
+{"timestamp": "2026-11-10T09:56:54.630744+00:00", "event": "state_transition", "grid": "city_grid", "state": "PREFLIGHT", "message": "starting offboard controller"}
+{"timestamp": "2026-11-10T09:57:04.900400+00:00", "event": "takeoff_confirmed", "grid": "city_grid"}
+{"timestamp": "2026-11-10T09:57:04.900913+00:00", "event": "state_transition", "grid": "city_grid", "state": "TRANSIT", "message": "navigating to (2, 5)"}
+{"timestamp": "2026-11-10T09:57:04.900966+00:00", "event": "path_planned", "grid": "city_grid", "phase": "outbound", "cells": 4, "length_m": 12.0, "path": [[5, 5], [4, 5], [3, 5], [2, 5]]}
+{"timestamp": "2026-11-10T09:57:04.901016+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 1, "x": 4, "y": 5, "ned_x": -4.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:57:06.781162+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 1, "x": 4, "y": 5}
+{"timestamp": "2026-11-10T09:57:06.781251+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 2, "x": 3, "y": 5, "ned_x": -8.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:57:08.508529+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 2, "x": 3, "y": 5}
+{"timestamp": "2026-11-10T09:57:08.508657+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 3, "x": 2, "y": 5, "ned_x": -12.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:57:10.187587+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 3, "x": 2, "y": 5}
+{"timestamp": "2026-11-10T09:57:10.189063+00:00", "event": "state_transition", "grid": "city_grid", "state": "AT_GOAL", "message": "goal (2, 5) reached"}
+{"timestamp": "2026-11-10T09:57:10.189140+00:00", "event": "goal_reached", "grid": "city_grid", "x": 2, "y": 5}
+{"timestamp": "2026-11-10T09:57:13.190480+00:00", "event": "state_transition", "grid": "city_grid", "state": "RETURNING", "message": "returning to start"}
+{"timestamp": "2026-11-10T09:57:13.190571+00:00", "event": "path_planned", "grid": "city_grid", "phase": "return", "cells": 4, "length_m": 12.0, "path": [[2, 5], [3, 5], [4, 5], [5, 5]]}
+{"timestamp": "2026-11-10T09:57:13.190649+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 1, "x": 3, "y": 5, "ned_x": -8.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:57:15.017249+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 1, "x": 3, "y": 5}
+{"timestamp": "2026-11-10T09:57:15.017403+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 2, "x": 4, "y": 5, "ned_x": -4.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:57:16.693997+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 2, "x": 4, "y": 5}
+{"timestamp": "2026-11-10T09:57:16.694176+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 3, "x": 5, "y": 5, "ned_x": 0.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:57:18.420740+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 3, "x": 5, "y": 5}
+{"timestamp": "2026-11-10T09:57:18.420952+00:00", "event": "returned_to_start", "grid": "city_grid"}
+{"timestamp": "2026-11-10T09:57:18.421756+00:00", "event": "state_transition", "grid": "city_grid", "state": "LANDING", "message": "landing at start"}
+{"timestamp": "2026-11-10T09:57:18.421797+00:00", "event": "landing", "grid": "city_grid"}
+{"timestamp": "2026-11-10T09:57:29.386378+00:00", "event": "state_transition", "grid": "city_grid", "state": "DONE", "message": "grid mission complete"}
+{"timestamp": "2026-11-10T09:57:29.386505+00:00", "event": "mission_complete", "grid": "city_grid"}

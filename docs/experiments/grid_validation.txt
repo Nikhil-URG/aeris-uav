@@ -1,0 +1,9 @@
+grid=city_grid cells=11x11 cell_size=4.0 m
+buildings=12 occupied_cells=44
+grid_mission.jsonl: goal=(0,0) outbound_cells=11 outbound_m=40.0 return_cells=11 completed=True occupied_in_path=[] occupied_in_return=[]
+grid_repeat_goal.jsonl: goal=(10,10) outbound_cells=11 outbound_m=40.0 return_cells=11 completed=True occupied_in_path=[] occupied_in_return=[]
+grid_repeat_short.jsonl: goal=(2,5) outbound_cells=4 outbound_m=12.0 return_cells=4 completed=True occupied_in_path=[] occupied_in_return=[]
+logged_positions=131
+minimum_building_clearance_m=2.269 at (0.24, -17.7, -4.99)
+positions_inside_buildings=0
+validation=PASS

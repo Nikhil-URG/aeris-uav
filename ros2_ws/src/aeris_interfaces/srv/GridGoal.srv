@@ -1,0 +1,8 @@
+# Goal cell in the grid. The grid map is loaded by the node and GUI.
+int32 x
+int32 y
+---
+bool accepted
+string message
+uint32 path_cells
+float64 path_length_m

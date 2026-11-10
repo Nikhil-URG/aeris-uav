@@ -1,7 +1,7 @@
 # AERIS Checkpoint
 
-**Checkpoint date:** 2026-11-09  
-**Phase:** Week 7 complete — project delivered  
+**Checkpoint date:** 2026-11-10  
+**Phase:** Post-Week 7 extension complete — city-grid A* navigation and GUI delivered  
 **Repository:** `/home/lucifer/Documents/Project_Aeris`  
 **Branch:** `main`  
 **Week 1 tag:** `week-1-checkpoint` (commit `0486c1e`)  
@@ -10,7 +10,8 @@
 **Week 4 tag:** `week-4-checkpoint` (commit `8618b01`)  
 **Week 5 tag:** `week-5-checkpoint` (commit `4237774`)  
 **Week 6 tag:** `week-6-checkpoint` (commit `94e8f02`)  
-**Week 7 tag:** `week-7-checkpoint` (this checkpoint commit)  
+**Week 7 tag:** `week-7-checkpoint` (commit `b8c39df`)  
+**Grid extension tag:** `grid-navigation-checkpoint` (this checkpoint commit)  
 **Remote:** `git@github.com:Nikhil-URG/aeris-uav.git`  
 **Web:** <https://github.com/Nikhil-URG/aeris-uav>
 
@@ -57,7 +58,7 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | ROS 2 | Jazzy (`/opt/ros/jazzy`) |
 | System Python | 3.12.3 at `/usr/bin/python3` |
 | NVIDIA driver | `595.104.02` (`nvidia-smi` works after reboot) |
-| Workspace build | `px4_msgs`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `aeris_bringup` |
+| Workspace build | `px4_msgs`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `aeris_grid_navigation`, `aeris_grid_gui`, `aeris_bringup` |
 | Telemetry rate | **50.005 Hz** on `/fmu/out/vehicle_local_position_v1` |
 | Offboard stream | **20 Hz** (`OffboardControlMode` + `TrajectorySetpoint`) |
 | Idle heartbeat | **2 Hz** while no mission is active |
@@ -90,10 +91,16 @@ Week 3 adds the mission manager: waypoint missions, a state machine, validation 
 | Obstacle benchmark | 3.75 m detection, 1 replan, original waypoint reached |
 | Safety latency | 41–98 ms from fault injection to action dispatch |
 | Evaluator tests | 4/4 |
+| City grid | 11×11 cells, 4 m cells, 12 buildings, 44 occupied cells |
+| Grid planner | 8-connected A*, no corner cutting, 9/9 tests |
+| Grid GUI | PyQt5 click-to-goal, live path/drone/progress, 1/1 test |
+| Grid missions | 3/3 complete: `(0,0)`, `(10,10)`, `(2,5)` after `DONE` |
+| Grid clearance | 2.269 m minimum; 0 positions inside buildings |
+| Grid evidence | `docs/experiments/grid_*` |
 | QGC | Connected; PX4 logs `[mavlink] partner IP: 127.0.0.1` |
-| Environment check | `18 ok, 0 warnings, 0 failures` |
+| Environment check | `20 ok, 0 warnings, 0 failures` |
 
-Milestone 1–7 acceptance are complete.
+Milestone 1–7 and the grid extension acceptance are complete.
 
 ---
 
@@ -143,6 +150,7 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── safety.md                   # Week 6 supervisor + faults
 │   ├── evaluation.md               # Week 7 benchmarks + report
 │   ├── demo.md                     # reproducible demo runbook
+│   ├── grid_navigation.md          # city grid, A* and GUI
 │   ├── checkpoint.md               # this file
 │   └── experiments/
 │       ├── development_log.md
@@ -162,6 +170,10 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │       ├── week6_mission_heartbeat_loss_mission.jsonl
 │       ├── week6_*_run.log / week6_*_safety.log
 │       ├── benchmark.json / benchmark.csv
+│       ├── grid_mission.jsonl
+│       ├── grid_repeat_goal.jsonl
+│       ├── grid_repeat_short.jsonl
+│       ├── grid_validation.txt
 │       └── plots/
 ├── px4/README.md                   # upstream pin and upgrade policy
 ├── ros2_ws/src/
@@ -172,7 +184,9 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── aeris_perception/           # OpenCV target detection
 │   ├── aeris_navigation/           # Lidar obstacle detection
 │   ├── aeris_safety/               # Health monitoring + fault injection
-│   └── aeris_bringup/              # launch + YAML + missions
+│   ├── aeris_grid_navigation/      # Occupancy grid + A* executor
+│   ├── aeris_grid_gui/             # PyQt5 goal/progress GUI
+│   └── aeris_bringup/              # launch + YAML + missions + grids
 ├── scripts/
 │   ├── setup.sh
 │   ├── aeris_env.sh
@@ -185,6 +199,8 @@ It deactivates/strips conda, unsets `CONDA_PREFIX` and related markers (CMake's 
 │   ├── run_qgroundcontrol.sh
 │   ├── spawn_targets.sh
 │   ├── spawn_obstacle.sh
+│   ├── spawn_grid.sh
+│   ├── spawn_buildings.py
 │   ├── run_safety_fault_test.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py         # metrics, CSV and plots
@@ -208,11 +224,17 @@ Key Week 2–6 files:
 - `ros2_ws/src/aeris_navigation/include/aeris_navigation/scan_analysis.hpp`
 - `ros2_ws/src/aeris_safety/src/safety_node.cpp`
 - `ros2_ws/src/aeris_safety/include/aeris_safety/safety_evaluator.hpp`
+- `ros2_ws/src/aeris_grid_navigation/aeris_grid_navigation/grid.py`
+- `ros2_ws/src/aeris_grid_navigation/aeris_grid_navigation/node.py`
+- `ros2_ws/src/aeris_grid_gui/aeris_grid_gui/gui.py`
 - `ros2_ws/src/aeris_bringup/config/offboard.yaml`
 - `ros2_ws/src/aeris_bringup/config/offboard_mission.yaml`
 - `ros2_ws/src/aeris_bringup/config/gz_camera_bridge.yaml`
 - `ros2_ws/src/aeris_bringup/config/gz_lidar_bridge.yaml`
 - `ros2_ws/src/aeris_bringup/config/safety.yaml`
+- `ros2_ws/src/aeris_bringup/config/offboard_grid.yaml`
+- `ros2_ws/src/aeris_bringup/config/safety_grid.yaml`
+- `ros2_ws/src/aeris_bringup/config/grids/city_grid.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/inspection_alpha.yaml`
 - `ros2_ws/src/aeris_bringup/config/missions/safety_test.yaml`
 - `ros2_ws/src/aeris_bringup/launch/offboard.launch.py`
@@ -220,13 +242,19 @@ Key Week 2–6 files:
 - `ros2_ws/src/aeris_bringup/launch/perception.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/navigation.launch.py`
 - `ros2_ws/src/aeris_bringup/launch/safety.launch.py`
+- `ros2_ws/src/aeris_bringup/launch/grid_navigation.launch.py`
+- `ros2_ws/src/aeris_bringup/launch/grid_gui.launch.py`
+- `ros2_ws/src/aeris_bringup/launch/grid_demo.launch.py`
 - `docs/flight_control.md`
 - `docs/perception.md`
 - `docs/navigation.md`
 - `docs/safety.md`
 - `docs/evaluation.md`
 - `docs/demo.md`
+- `docs/grid_navigation.md`
 - `scripts/evaluate_mission.py`
+- `scripts/spawn_grid.sh`
+- `scripts/spawn_buildings.py`
 - `tests/test_evaluate_mission.py`
 - `docs/experiments/week2_offboard_run.log`
 - `docs/experiments/week3_mission.jsonl`
@@ -234,6 +262,10 @@ Key Week 2–6 files:
 - `docs/experiments/week5_mission.jsonl`
 - `docs/experiments/week6_*_mission.jsonl`
 - `docs/experiments/benchmark.json`
+- `docs/experiments/grid_mission.jsonl`
+- `docs/experiments/grid_repeat_goal.jsonl`
+- `docs/experiments/grid_repeat_short.jsonl`
+- `docs/experiments/grid_validation.txt`
 - `docs/experiments/plots/`
 
 ---
@@ -440,6 +472,39 @@ python3 -m pytest tests/test_evaluate_mission.py -q
 The full report is `docs/evaluation.md`; the terminal-by-terminal demo and
 video storyboard are `docs/demo.md`.
 
+### 5.12 City-grid navigation demo
+
+Start the lightweight airframe and spawn the city:
+
+```bash
+source scripts/aeris_env.sh
+PX4_SIM_MODEL=gz_x500 bash scripts/launch_simulation.sh
+bash scripts/spawn_grid.sh
+```
+
+Launch the grid stack with the GUI:
+
+```bash
+ros2 launch aeris_bringup grid_demo.launch.py
+```
+
+Click a free cell, or call the service:
+
+```bash
+ros2 service call /aeris_grid_navigation/set_goal \
+  aeris_interfaces/srv/GridGoal "{x: 0, y: 0}"
+```
+
+The drone plans the shortest free path, flies to the goal, returns to the
+start cell, and lands. Repeated goals work without restarting the stack.
+Headless operation:
+
+```bash
+ros2 launch aeris_bringup grid_navigation.launch.py
+```
+
+See `docs/grid_navigation.md` and `docs/experiments/grid_*`.
+
 ---
 
 ## 6. Hard-won gotchas
@@ -563,6 +628,31 @@ Killing only the `ros2 launch` front-end can leave Python nodes alive. A stale m
 
 When `~/rtl` is commanded, PX4 leaves offboard mode. The controller must enter its explicit `RTL` state, stop the offboard stream, and not treat the resulting offboard/failsafe transition as an abort. Otherwise it sends `NAV_LAND` and overrides the return-to-launch decision.
 
+### 6.24 Grid packages must not depend on bringup
+
+`aeris_bringup` launches `aeris_grid_gui`, so the GUI cannot also declare a
+package dependency on `aeris_bringup`. The grid packages resolve the default
+map through `AERIS_ROOT`; the launch files always pass the installed map path.
+
+### 6.25 rclpy nodes have no `self.now()`
+
+Use `self.get_clock().now().to_msg()` for message stamps. Calling
+`self.now()` kills the node on its first status publication.
+
+### 6.26 Allow offboard restart after DONE
+
+A GUI demo must be able to select a second goal. The offboard controller
+accepts `start` from `DONE`/`ABORTED` after readiness checks pass and
+transitions back through `WAIT_FOR_READY`. Do not restore the old
+`WAIT_FOR_READY`-only check.
+
+### 6.27 Use `gz_x500` for the city grid
+
+The camera airframe plus the large city world caused the Gazebo server to
+crash during a long flight, which killed PX4 telemetry and triggered the
+safety land path. The grid demo needs no camera; use `gz_x500`, which is
+stable across multiple city missions.
+
 ---
 
 ## 7. Acceptance records
@@ -662,11 +752,28 @@ Evidence: `docs/experiments/week6_nominal_mission.jsonl`, `docs/experiments/week
 
 Evidence: `docs/experiments/benchmark.json`, `docs/experiments/benchmark.csv`, `docs/experiments/plots/`.
 
+### Grid extension — city map, A* and GUI
+
+| Check | Result |
+|---|---|
+| Grid map | PASS — 11×11, 4 m cells, 12 buildings, 44 occupied |
+| A* planner | PASS — 9/9 tests, no corner cutting |
+| GUI | PASS — click mapping test, live path/drone/progress |
+| `(0,0)` mission | PASS — 11 cells / 40 m out and return |
+| `(10,10)` mission | PASS — 11 cells / 40 m out and return |
+| Repeat `(2,5)` from `DONE` | PASS — 4 cells / 12 m out and return |
+| Path occupancy | PASS — zero occupied cells in any path |
+| Building clearance | PASS — 2.269 m minimum, zero intrusions |
+| Workspace tests | PASS — 42 ROS + 4 evaluator |
+| Environment check | PASS — 20 ok |
+
+Evidence: `docs/experiments/grid_mission.jsonl`, `docs/experiments/grid_repeat_goal.jsonl`, `docs/experiments/grid_repeat_short.jsonl`, `docs/experiments/grid_validation.txt`, `docs/experiments/plots/grid_gui*.png`.
+
 ---
 
 ## 8. Final state and future work
 
-All seven planned weeks are complete:
+All seven planned weeks and the grid navigation extension are complete:
 
 1. PX4/Gazebo/ROS 2 telemetry foundation.
 2. Offboard arm, takeoff, hold and landing.
@@ -675,15 +782,18 @@ All seven planned weeks are complete:
 5. Lidar obstacle detection and reactive replanning.
 6. Safety supervision, fault injection and land/RTL failsafes.
 7. Evaluation harness, benchmark report, plots and demo runbook.
+8. City-grid occupancy, A* shortest-path navigation, return-to-start and a
+   PyQt5 goal-selection GUI.
 
 Future work, in priority order:
 
 1. Repeat each scenario across many trials and add wind/obstacle randomization.
 2. Validate the architecture on hardware or hardware-in-the-loop.
 3. Calibrate camera extrinsics and replace the approximate ground projection.
-4. Replace the reactive detour with a global/grid planner and 3D avoidance.
-5. Record and publish the demo video using `docs/demo.md`.
-6. Add CI for the build, ROS tests, evaluator tests and environment checks.
+4. Extend the grid planner with dynamic obstacles, 3D costs and path smoothing.
+5. Add map editing and mission history to the GUI.
+6. Record and publish the demo video using `docs/demo.md`.
+7. Add CI for the build, ROS tests, evaluator tests and environment checks.
 
 ---
 
@@ -707,30 +817,35 @@ Read these files first:
 - docs/safety.md
 - docs/evaluation.md
 - docs/demo.md
+- docs/grid_navigation.md
 - docs/experiments/development_log.md
 - docs/experiments/week3_mission.jsonl
 - docs/experiments/week4_mission.jsonl
 - docs/experiments/week5_mission.jsonl
 - docs/experiments/week6_*_mission.jsonl
 - docs/experiments/benchmark.json
+- docs/experiments/grid_mission.jsonl
+- docs/experiments/grid_validation.txt
 
 Current state:
-- All seven weeks are complete.
+- All seven weeks and the city-grid navigation extension are complete.
 - aeris_flight_control: 20 Hz offboard stream, arm, takeoff to 5 m, HOLD/TRANSIT/RTL/LAND, go_to/hold/land/rtl/abort, FlightStatus at 10 Hz.
 - aeris_mission_manager: YAML validation, sequential waypoints, RTL, landing, obstacle replanning, safety aborts, JSONL logs; 11/11 tests pass.
 - aeris_perception: downward mono camera, OpenCV red-panel detection, 4/4 tests; 2/2 detections at inspection waypoints, confidence 1.00.
 - aeris_navigation: 270° lidar sector obstacle map and corridor check, 4/4 tests; obstacle mission logged a 3.75 m detection and detour to (1.54, 1.94).
 - aeris_safety: pose/battery/geofence/heartbeat supervision, fault injection, land/RTL actions, 11/11 tests. All four injected faults were verified in SITL, with 41–98 ms decision latency.
+- aeris_grid_navigation: 11×11 occupancy grid, 8-connected A* with no corner cutting, go-to-goal/return/land executor, 9/9 tests. Three SITL missions completed, including a repeat goal after DONE; minimum building clearance 2.269 m.
+- aeris_grid_gui: PyQt5 click-to-goal, path, live drone and progress display, 1/1 headless test.
 - Evaluation: scripts/evaluate_mission.py, 8 recorded runs, benchmark JSON/CSV, two plots, 4 evaluator tests.
-- Workspace total: 32 ROS tests + 4 evaluator tests, 0 failures; environment check 18 ok.
-- Perception uses gz_x500_mono_cam_down; navigation uses gz_x500_lidar_2d; ros_gz_bridge is installed.
+- Workspace total: 42 ROS tests + 4 evaluator tests, 0 failures; environment check 20 ok.
+- Perception uses gz_x500_mono_cam_down; navigation uses gz_x500_lidar_2d; the grid demo uses gz_x500 (camera + city world was unstable); ros_gz_bridge is installed.
 - PYTHONNOUSERSITE=1 is required for apt OpenCV/NumPy; aeris_env.sh sets it.
 - launch_simulation.sh keeps the SITL battery healthy with PX4_PARAM_SIM_BAT_MIN_PCT=100 and PX4_PARAM_SIM_BAT_DRAIN=86400.
 - PX4 v1.17 uses _v1 topic suffixes for vehicle_local_position and vehicle_status.
 - Always run `source scripts/aeris_env.sh` before ROS/PX4 commands; it keeps conda's Python 3.13 out of the ROS shell.
 - Never pipe PX4's interactive console through tee; launch_simulation.sh uses `script` for PTY logging.
 
-No further milestone is required. If extending the project, start with the future-work list in docs/checkpoint.md §8: repeated trials, hardware/HITL, calibrated perception, global planning, demo video and CI.
+No further milestone is required. If extending the project, start with the future-work list in docs/checkpoint.md §8: repeated trials, hardware/HITL, calibrated perception, dynamic/3D grid planning, GUI map editing, demo video and CI.
 
 Before changing code, run:
   source scripts/aeris_env.sh
@@ -759,7 +874,8 @@ Current branch: `main`. All checkpoint tags are pushed:
 - `week-4-checkpoint` — Week 4 perception (`8618b01`)
 - `week-5-checkpoint` — Week 5 obstacle avoidance (`4237774`)
 - `week-6-checkpoint` — Week 6 safety supervisor (`94e8f02`)
-- `week-7-checkpoint` — Week 7 evaluation and demo (this checkpoint)
+- `week-7-checkpoint` — Week 7 evaluation and demo (`b8c39df`)
+- `grid-navigation-checkpoint` — city-grid A* and GUI (this checkpoint)
 
 Push subsequent changes:
 
@@ -801,16 +917,18 @@ ros2 pkg executables aeris_mission_manager
 ros2 pkg executables aeris_perception
 ros2 pkg executables aeris_navigation
 ros2 pkg executables aeris_safety
+ros2 pkg executables aeris_grid_navigation
+ros2 pkg executables aeris_grid_gui
 python3 -m pytest tests/test_evaluate_mission.py -q
 ```
 
 Expected:
 
-- `18 ok, 0 warnings, 0 failures`
+- `20 ok, 0 warnings, 0 failures`
 - clean working tree
-- `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `px4_msgs`
-- executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`, `perception`, `navigation_node`, `safety_node`
+- `aeris_bringup`, `aeris_interfaces`, `aeris_flight_control`, `aeris_mission_manager`, `aeris_perception`, `aeris_navigation`, `aeris_safety`, `aeris_grid_navigation`, `aeris_grid_gui`, `px4_msgs`
+- executables: `telemetry_monitor`, `offboard_controller`, `mission_manager`, `perception`, `navigation_node`, `safety_node`, `grid_navigation`, `grid_gui`
 - `ros_gz_bridge` installed
 - `4 passed` for the evaluator tests
 
-Then start the simulation and run the full mission demo as in §5, or follow `docs/demo.md`.
+Then start the simulation and run the full mission demo as in §5, the city-grid demo as in §5.12, or follow `docs/demo.md`.

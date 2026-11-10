@@ -116,8 +116,26 @@ PX4 v1.17 appends a `_v1` suffix to versioned DDS messages (for example `vehicle
 | `aeris_navigation` | C++ | Active | Lidar obstacle detection and corridor analysis |
 | `aeris_perception` | Python | Active | Camera, OpenCV detection and localization |
 | `aeris_safety` | C++ | Active | Health checks, fault injection and failsafe supervision |
+| `aeris_grid_navigation` | Python | Active | Occupancy grid, A* planning and goal/return execution |
+| `aeris_grid_gui` | Python + PyQt5 | Active | Goal selection and live drone/path display |
 
-All packages are built by Week 6. Week 7 adds evaluation tooling rather than new flight packages.
+All flight packages are built. Week 7 adds evaluation tooling; the grid
+extension adds occupancy-grid planning and the GUI.
+
+## 7.1 Grid navigation layer
+
+The grid extension adds a separate autonomy path for the city environment:
+
+```text
+grid YAML ──► aeris_grid_navigation (A*) ──► GoTo service ──► aeris_flight_control
+                    │
+                    ├──► /aeris/grid/status ──► aeris_grid_gui
+                    └──► results/logs/grid_*/grid.jsonl
+```
+
+The grid node never publishes PX4 topics. It uses the same `GoTo` and `Land`
+services as the mission manager, so PX4 command authority remains centralized.
+The GUI is a read-only consumer of status plus a `GridGoal` service client.
 
 ## 8. Safety architecture
 

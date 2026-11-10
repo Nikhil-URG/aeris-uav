@@ -660,6 +660,112 @@ Project complete. Future work is listed in `docs/checkpoint.md` §8.
 
 ---
 
+## 2026-11-10 — Grid navigation extension and PyQt5 goal GUI
+
+### Goal
+
+Create a city environment divided into grid cells, mark building cells as
+occupied, let the user select a goal in a GUI, fly the shortest free path,
+and return to the start.
+
+### Implemented
+
+- `aeris_interfaces`:
+  - `GridStatus.msg`;
+  - `GridGoal.srv`.
+- `aeris_grid_navigation` Python package:
+  - YAML grid map loader and validation;
+  - occupancy set from rectangular building blocks;
+  - 8-connected A* with Euclidean heuristic and no corner cutting;
+  - cell ↔ local-NED conversion and path-length calculation;
+  - mission executor using `~/start`, `~/go_to` and `~/land`;
+  - return-to-start path, 3 s goal hold, JSONL logging;
+  - safety-status watchdog integration;
+  - 9 planner tests.
+- `aeris_grid_gui` PyQt5 package:
+  - city grid, buildings, start/goal, planned path and live drone drawing;
+  - click-to-goal `GridGoal` service;
+  - progress bar, path length/remaining distance, safety banner;
+  - Go Home and Land buttons;
+  - headless click-mapping test.
+- `aeris_bringup`:
+  - `config/grids/city_grid.yaml`;
+  - `config/offboard_grid.yaml`, `config/safety_grid.yaml`;
+  - `grid_navigation.launch.py`, `grid_gui.launch.py`,
+    `grid_demo.launch.py`.
+- `scripts/spawn_buildings.py` / `spawn_grid.sh`:
+  - generates and spawns static building boxes from the grid YAML.
+- `aeris_flight_control`:
+  - allow a new `start` from `DONE`/`ABORTED` so repeated GUI goals work in
+    one stack.
+- `scripts/check_environment.sh`:
+  - checks the grid navigation and GUI executables.
+
+### Grid result
+
+| Run | Goal | Outbound | Return | Outcome |
+|---|---|---|---|---|
+| 1 | `(0,0)` | 11 cells / 40 m | 11 cells / 40 m | `DONE`, disarmed |
+| 2 | `(10,10)` | 11 cells / 40 m | 11 cells / 40 m | `DONE`, disarmed |
+| 3 | `(2,5)` from `DONE` | 4 cells / 12 m | 4 cells / 12 m | `DONE`, disarmed |
+
+Validation:
+
+- all outbound/return cells free of occupied cells;
+- 131 logged positions checked against building footprints;
+- minimum building clearance **2.269 m**;
+- zero positions inside buildings;
+- repeated goal after `DONE` works without restarting the stack.
+
+Tests:
+
+```text
+aeris_grid_navigation: 9/9
+aeris_grid_gui:        1/1
+Workspace:            42 tests, 0 failures
+```
+
+Evidence:
+
+- `docs/experiments/grid_mission.jsonl`
+- `docs/experiments/grid_repeat_goal.jsonl`
+- `docs/experiments/grid_repeat_short.jsonl`
+- `docs/experiments/grid_mission_run.log`
+- `docs/experiments/grid_repeat_run.log`
+- `docs/experiments/grid_validation.txt`
+- `docs/experiments/plots/grid_gui.png`
+- `docs/experiments/plots/grid_gui_repeat.png`
+- `docs/grid_navigation.md`
+
+### Issues and fixes
+
+1. **Package dependency cycle.** `aeris_bringup` depended on `aeris_grid_gui`
+   for launch, while the GUI depended on `bringup` for the default grid path.
+   - Fix: grid packages resolve the default path through `AERIS_ROOT` and the
+     launch files always pass the installed grid path explicitly.
+
+2. **`GridStatus.stamp` used `self.now()`.** rclpy nodes do not have a `now()`
+   method; the node died on its first status publish.
+   - Fix: use `self.get_clock().now().to_msg()`.
+
+3. **Repeated goals rejected after `DONE`.** The offboard controller only
+   accepted `start` in `WAIT_FOR_READY`.
+   - Fix: allow restart from `DONE`/`ABORTED` after readiness checks pass and
+     transition back through `WAIT_FOR_READY`.
+
+4. **Camera airframe + large city caused a Gazebo server crash.** A long
+   camera-enabled city flight lost Gazebo/PX4 telemetry mid-return and the
+   safety supervisor commanded a landing.
+   - Fix for the grid demo: use `gz_x500` (no camera). The grid feature needs
+     no onboard camera, and the lighter airframe is stable.
+
+### Next
+
+No required milestone. Possible extensions: dynamic obstacles, 3D planning,
+path smoothing, map editing in the GUI and hardware validation.
+
+---
+
 ## Entry template
 
 ### YYYY-MM-DD — Title

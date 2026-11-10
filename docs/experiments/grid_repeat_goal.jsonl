@@ -1,0 +1,55 @@
+{"timestamp": "2026-11-10T09:55:45.513263+00:00", "event": "grid_loaded", "grid": "city_grid", "width": 11, "height": 11, "cell_size_m": 4.0, "buildings": 12}
+{"timestamp": "2026-11-10T09:55:45.513392+00:00", "event": "goal_selected", "grid": "city_grid", "x": 10, "y": 10}
+{"timestamp": "2026-11-10T09:55:45.513864+00:00", "event": "state_transition", "grid": "city_grid", "state": "PREFLIGHT", "message": "starting offboard controller"}
+{"timestamp": "2026-11-10T09:55:55.580687+00:00", "event": "takeoff_confirmed", "grid": "city_grid"}
+{"timestamp": "2026-11-10T09:55:55.581780+00:00", "event": "state_transition", "grid": "city_grid", "state": "TRANSIT", "message": "navigating to (10, 10)"}
+{"timestamp": "2026-11-10T09:55:55.581876+00:00", "event": "path_planned", "grid": "city_grid", "phase": "outbound", "cells": 11, "length_m": 40.0, "path": [[5, 5], [6, 5], [7, 5], [8, 5], [9, 5], [10, 5], [10, 6], [10, 7], [10, 8], [10, 9], [10, 10]]}
+{"timestamp": "2026-11-10T09:55:55.581965+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 1, "x": 6, "y": 5, "ned_x": 4.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:55:57.512117+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 1, "x": 6, "y": 5}
+{"timestamp": "2026-11-10T09:55:57.512581+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 2, "x": 7, "y": 5, "ned_x": 8.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:55:59.188542+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 2, "x": 7, "y": 5}
+{"timestamp": "2026-11-10T09:55:59.188616+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 3, "x": 8, "y": 5, "ned_x": 12.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:56:00.914900+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 3, "x": 8, "y": 5}
+{"timestamp": "2026-11-10T09:56:00.915056+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 4, "x": 9, "y": 5, "ned_x": 16.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:56:02.593484+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 4, "x": 9, "y": 5}
+{"timestamp": "2026-11-10T09:56:02.593738+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 5, "x": 10, "y": 5, "ned_x": 20.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:56:04.320739+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 5, "x": 10, "y": 5}
+{"timestamp": "2026-11-10T09:56:04.320893+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 6, "x": 10, "y": 6, "ned_x": 20.0, "ned_y": 4.0}
+{"timestamp": "2026-11-10T09:56:06.099466+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 6, "x": 10, "y": 6}
+{"timestamp": "2026-11-10T09:56:06.099738+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 7, "x": 10, "y": 7, "ned_x": 20.0, "ned_y": 8.0}
+{"timestamp": "2026-11-10T09:56:07.877705+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 7, "x": 10, "y": 7}
+{"timestamp": "2026-11-10T09:56:07.877806+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 8, "x": 10, "y": 8, "ned_x": 20.0, "ned_y": 12.0}
+{"timestamp": "2026-11-10T09:56:09.605476+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 8, "x": 10, "y": 8}
+{"timestamp": "2026-11-10T09:56:09.605566+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 9, "x": 10, "y": 9, "ned_x": 20.0, "ned_y": 16.0}
+{"timestamp": "2026-11-10T09:56:11.281066+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 9, "x": 10, "y": 9}
+{"timestamp": "2026-11-10T09:56:11.281129+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "TRANSIT", "index": 10, "x": 10, "y": 10, "ned_x": 20.0, "ned_y": 20.0}
+{"timestamp": "2026-11-10T09:56:13.009277+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "TRANSIT", "index": 10, "x": 10, "y": 10}
+{"timestamp": "2026-11-10T09:56:13.009731+00:00", "event": "state_transition", "grid": "city_grid", "state": "AT_GOAL", "message": "goal (10, 10) reached"}
+{"timestamp": "2026-11-10T09:56:13.009757+00:00", "event": "goal_reached", "grid": "city_grid", "x": 10, "y": 10}
+{"timestamp": "2026-11-10T09:56:16.012994+00:00", "event": "state_transition", "grid": "city_grid", "state": "RETURNING", "message": "returning to start"}
+{"timestamp": "2026-11-10T09:56:16.013263+00:00", "event": "path_planned", "grid": "city_grid", "phase": "return", "cells": 11, "length_m": 40.0, "path": [[10, 10], [9, 10], [8, 10], [7, 10], [6, 10], [5, 10], [5, 9], [5, 8], [5, 7], [5, 6], [5, 5]]}
+{"timestamp": "2026-11-10T09:56:16.013482+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 1, "x": 9, "y": 10, "ned_x": 16.0, "ned_y": 20.0}
+{"timestamp": "2026-11-10T09:56:17.790722+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 1, "x": 9, "y": 10}
+{"timestamp": "2026-11-10T09:56:17.790843+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 2, "x": 8, "y": 10, "ned_x": 12.0, "ned_y": 20.0}
+{"timestamp": "2026-11-10T09:56:19.517641+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 2, "x": 8, "y": 10}
+{"timestamp": "2026-11-10T09:56:19.517931+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 3, "x": 7, "y": 10, "ned_x": 8.0, "ned_y": 20.0}
+{"timestamp": "2026-11-10T09:56:21.195937+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 3, "x": 7, "y": 10}
+{"timestamp": "2026-11-10T09:56:21.196123+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 4, "x": 6, "y": 10, "ned_x": 4.0, "ned_y": 20.0}
+{"timestamp": "2026-11-10T09:56:22.923016+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 4, "x": 6, "y": 10}
+{"timestamp": "2026-11-10T09:56:22.923151+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 5, "x": 5, "y": 10, "ned_x": 0.0, "ned_y": 20.0}
+{"timestamp": "2026-11-10T09:56:24.610128+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 5, "x": 5, "y": 10}
+{"timestamp": "2026-11-10T09:56:24.610241+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 6, "x": 5, "y": 9, "ned_x": 0.0, "ned_y": 16.0}
+{"timestamp": "2026-11-10T09:56:26.387962+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 6, "x": 5, "y": 9}
+{"timestamp": "2026-11-10T09:56:26.388082+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 7, "x": 5, "y": 8, "ned_x": 0.0, "ned_y": 12.0}
+{"timestamp": "2026-11-10T09:56:28.116065+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 7, "x": 5, "y": 8}
+{"timestamp": "2026-11-10T09:56:28.116253+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 8, "x": 5, "y": 7, "ned_x": 0.0, "ned_y": 8.0}
+{"timestamp": "2026-11-10T09:56:29.793158+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 8, "x": 5, "y": 7}
+{"timestamp": "2026-11-10T09:56:29.793409+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 9, "x": 5, "y": 6, "ned_x": 0.0, "ned_y": 4.0}
+{"timestamp": "2026-11-10T09:56:31.520473+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 9, "x": 5, "y": 6}
+{"timestamp": "2026-11-10T09:56:31.520610+00:00", "event": "cell_transit", "grid": "city_grid", "phase": "RETURNING", "index": 10, "x": 5, "y": 5, "ned_x": 0.0, "ned_y": 0.0}
+{"timestamp": "2026-11-10T09:56:33.198229+00:00", "event": "cell_reached", "grid": "city_grid", "phase": "RETURNING", "index": 10, "x": 5, "y": 5}
+{"timestamp": "2026-11-10T09:56:33.198512+00:00", "event": "returned_to_start", "grid": "city_grid"}
+{"timestamp": "2026-11-10T09:56:33.199861+00:00", "event": "state_transition", "grid": "city_grid", "state": "LANDING", "message": "landing at start"}
+{"timestamp": "2026-11-10T09:56:33.199928+00:00", "event": "landing", "grid": "city_grid"}
+{"timestamp": "2026-11-10T09:56:44.323505+00:00", "event": "state_transition", "grid": "city_grid", "state": "DONE", "message": "grid mission complete"}
+{"timestamp": "2026-11-10T09:56:44.323672+00:00", "event": "mission_complete", "grid": "city_grid"}

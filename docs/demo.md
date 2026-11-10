@@ -137,7 +137,44 @@ The complete automated scenario runner is:
 bash scripts/run_safety_fault_test.sh low_battery
 ```
 
-## 4. Evidence to show
+## 4. City-grid GUI demo
+
+Use the lightweight airframe; the grid demo does not need the camera:
+
+```bash
+PX4_SIM_MODEL=gz_x500 bash scripts/launch_simulation.sh
+bash scripts/spawn_grid.sh
+```
+
+Launch the full grid stack and GUI:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup grid_demo.launch.py
+```
+
+Click a free cell in the PyQt5 window. Expected behavior:
+
+- the A* path appears immediately (yellow line);
+- the drone takes off, follows the path around the dark building cells;
+- the progress bar and NED position update live;
+- at the goal the state becomes `AT_GOAL`, then `RETURNING`;
+- the drone returns to the green start cell, lands and disarms;
+- `docs/experiments/grid_mission.jsonl` is written.
+
+Click another free cell without restarting the stack; the offboard controller
+accepts a new mission after `DONE`. Use the **Go Home** button to target the
+start cell, or **Land** to land immediately.
+
+Headless alternative:
+
+```bash
+ros2 launch aeris_bringup grid_navigation.launch.py
+ros2 service call /aeris_grid_navigation/set_goal \
+  aeris_interfaces/srv/GridGoal "{x: 0, y: 0}"
+```
+
+## 5. Evidence to show
 
 | Artifact | Path |
 |---|---|
@@ -146,11 +183,15 @@ bash scripts/run_safety_fault_test.sh low_battery
 | Obstacle detour | `docs/experiments/week5_mission.jsonl` |
 | Safety nominal | `docs/experiments/week6_nominal_mission.jsonl` |
 | Safety faults | `docs/experiments/week6_*_mission.jsonl` |
+| Grid missions | `docs/experiments/grid_*mission.jsonl` |
+| Grid validation | `docs/experiments/grid_validation.txt` |
+| GUI screenshot | `docs/experiments/plots/grid_gui_repeat.png` |
 | Benchmark metrics | `docs/experiments/benchmark.json` |
 | Plots | `docs/experiments/plots/` |
 | Evaluation report | `docs/evaluation.md` |
+| Grid design | `docs/grid_navigation.md` |
 
-## 5. Demo video storyboard
+## 6. Demo video storyboard
 
 | Scene | Duration | Content |
 |---|---|---|
@@ -160,7 +201,8 @@ bash scripts/run_safety_fault_test.sh low_battery
 | 4 | 30 s | Perception log and detected targets |
 | 5 | 40 s | Obstacle visible in Gazebo, detour, obstacle/replan events |
 | 6 | 45 s | Safety status, injected fault, RTL/land, disarmed vehicle |
-| 7 | 20 s | Benchmark plots and test summary |
+| 7 | 45 s | City grid, click-to-goal, A* path, live progress, return and landing |
+| 8 | 20 s | Benchmark plots and test summary |
 
 Recording notes:
 
@@ -172,7 +214,7 @@ Recording notes:
 - Do not edit logs after recording; use the checked-in evidence for the
   written report.
 
-## 6. Cleanup
+## 7. Cleanup
 
 Stop the ROS terminals with `Ctrl+C`, then stop PX4/Gazebo. QGroundControl can
 remain open for the next scenario. If a launch leaves a stale node behind:

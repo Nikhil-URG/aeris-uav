@@ -9,11 +9,13 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Detection.msg"
   "msg/DetectionArray.msg"
   "msg/FlightStatus.msg"
+  "msg/GridStatus.msg"
   "msg/MissionStatus.msg"
   "msg/Obstacle.msg"
   "msg/ObstacleArray.msg"
   "msg/SafetyStatus.msg"
   "srv/GoTo.srv"
+  "srv/GridGoal.srv"
   "srv/InjectFault.srv"
   DEPENDENCIES builtin_interfaces
 )

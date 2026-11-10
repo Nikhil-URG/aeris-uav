@@ -337,6 +337,30 @@ python3 -m pytest tests/test_evaluate_mission.py -q
 The full report is [evaluation.md](evaluation.md); the reproducible demo and
 video storyboard are [demo.md](demo.md).
 
+### City-grid navigation GUI
+
+Start the lightweight airframe (the grid demo does not need the camera):
+
+```bash
+PX4_SIM_MODEL=gz_x500 bash scripts/launch_simulation.sh
+bash scripts/spawn_grid.sh
+```
+
+Launch the grid stack and PyQt5 GUI:
+
+```bash
+source scripts/aeris_env.sh
+ros2 launch aeris_bringup grid_demo.launch.py
+```
+
+Click a free cell to send the drone there; it plans the shortest free path,
+returns to the start cell and lands. The GUI shows buildings, the path, live
+position, progress and safety state. A headless stack is available with
+`grid_navigation.launch.py`, and the goal service can be called directly with
+`aeris_interfaces/srv/GridGoal`.
+
+See [grid_navigation.md](grid_navigation.md).
+
 ## 6. QGroundControl (optional but recommended)
 
 ```bash

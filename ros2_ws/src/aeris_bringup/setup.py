@@ -27,6 +27,10 @@ setup(
             os.path.join("share", package_name, "config", "missions"),
             glob("config/missions/*.yaml"),
         ),
+        (
+            os.path.join("share", package_name, "config", "grids"),
+            glob("config/grids/*.yaml"),
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

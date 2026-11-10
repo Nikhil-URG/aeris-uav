@@ -4,7 +4,7 @@
 
 AERIS is a modular UAV autonomy platform built on **PX4** and **ROS 2 Jazzy**. It is developed as a reproducible robotics software product: pinned dependencies, documented interfaces, scripted setup, simulation scenarios, automated checks, and measured results.
 
-**Current status:** Week 7 complete — full stack evaluated, benchmarked, documented and packaged for demo. 36 automated tests pass; four safety faults verified in SITL.
+**Current status:** Post-Week 7 extension complete — city-grid occupancy, A* shortest-path navigation, return-to-start and a live goal-selection GUI are verified in SITL. 46 automated tests pass; four safety faults verified in SITL.
 
 ## Mission
 
@@ -81,6 +81,7 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── safety.md
 │   ├── evaluation.md
 │   ├── demo.md
+│   ├── grid_navigation.md
 │   ├── checkpoint.md
 │   └── experiments/
 │       ├── development_log.md
@@ -100,6 +101,10 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── week6_mission_heartbeat_loss_mission.jsonl
 │       ├── week6_*_run.log / week6_*_safety.log
 │       ├── benchmark.json / benchmark.csv
+│       ├── grid_mission.jsonl
+│       ├── grid_repeat_goal.jsonl
+│       ├── grid_repeat_short.jsonl
+│       ├── grid_validation.txt
 │       └── plots/
 ├── px4/
 │   └── README.md                # Upstream PX4 pin and setup notes
@@ -112,6 +117,8 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │       ├── aeris_perception/
 │       ├── aeris_navigation/
 │       ├── aeris_safety/
+│       ├── aeris_grid_navigation/
+│       ├── aeris_grid_gui/
 │       └── aeris_bringup/
 ├── simulation/
 │   ├── worlds/
@@ -129,6 +136,8 @@ See [docs/architecture.md](docs/architecture.md) for the full design.
 │   ├── run_qgroundcontrol.sh
 │   ├── spawn_targets.sh
 │   ├── spawn_obstacle.sh
+│   ├── spawn_grid.sh
+│   ├── spawn_buildings.py
 │   ├── run_safety_fault_test.sh
 │   ├── check_environment.sh
 │   └── evaluate_mission.py      # JSONL metrics, CSV and plots
@@ -327,11 +336,46 @@ Recorded benchmark results:
 - 100% detection rate at both inspection waypoints, mean confidence 1.00;
 - obstacle detected at 3.75 m, one lateral replan, original waypoint reached;
 - safety actions dispatched 41–98 ms after fault injection;
-- 32 ROS tests + 4 evaluator tests, 0 failures.
+- 42 ROS tests + 4 evaluator tests, 0 failures.
 
 Read the full report in [docs/evaluation.md](docs/evaluation.md), the plots in
 `docs/experiments/plots/`, and the reproducible demo runbook in
 [docs/demo.md](docs/demo.md).
+
+## City-grid navigation and GUI
+
+The city-grid extension adds occupied building cells, A* shortest-path
+planning, a go-to-goal-and-return mission, and a PyQt5 GUI.
+
+Start the lightweight simulation and spawn the city:
+
+```bash
+source scripts/aeris_env.sh
+PX4_SIM_MODEL=gz_x500 bash scripts/launch_simulation.sh
+bash scripts/spawn_grid.sh
+```
+
+Launch the full stack and GUI:
+
+```bash
+ros2 launch aeris_bringup grid_demo.launch.py
+```
+
+Click any free cell in the GUI. The drone plans the shortest free path, flies
+to the goal, returns to the start cell and lands. The GUI shows buildings, the
+path, live drone position, progress and safety state. A service interface is
+also available:
+
+```bash
+ros2 service call /aeris_grid_navigation/set_goal \
+  aeris_interfaces/srv/GridGoal "{x: 0, y: 0}"
+```
+
+Validation: three missions (two 40 m corner runs and one 12 m repeat goal),
+all paths free of occupied cells, minimum building clearance 2.269 m, all
+flights returned to start and disarmed. See
+[docs/grid_navigation.md](docs/grid_navigation.md) and the
+`docs/experiments/grid_*` evidence.
 
 Full instructions, verification steps and troubleshooting: [docs/installation.md](docs/installation.md).
 
@@ -360,6 +404,7 @@ The environment script is required because this machine has Miniforge first in `
 | 5 | Navigation: depth camera, obstacle detection, local replanning | Complete |
 | 6 | Safety: fault injection, failsafes, RTL, automated tests | Complete |
 | 7 | Evaluation: benchmarks, experiment reports, demo | Complete |
+| 8 | Extension: city grid, A* shortest path, goal-selection GUI | Complete |
 
 ## License
 

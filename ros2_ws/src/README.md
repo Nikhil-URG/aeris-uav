@@ -13,23 +13,25 @@ or, from the repository root:
 bash scripts/build.sh
 ```
 
-## Active packages (Week 6)
+## Active packages (grid extension)
 
 | Package | Language | Purpose |
 |---|---|---|
-| `aeris_interfaces` | ROS 2 msgs/srvs | Flight/mission/safety status, detections, obstacles, goals, fault injection |
+| `aeris_interfaces` | ROS 2 msgs/srvs | Flight/mission/safety/grid status, detections, obstacles, goals, fault injection |
 | `aeris_flight_control` | C++ | PX4 telemetry and offboard control |
 | `aeris_mission_manager` | Python | Mission validation, sequencing, replanning, safety aborts and JSONL logging |
 | `aeris_perception` | Python | Camera bridge consumer, OpenCV detection and localization |
 | `aeris_navigation` | C++ | Lidar obstacle detection and corridor analysis |
 | `aeris_safety` | C++ | Health monitoring, fault injection and failsafe actions |
+| `aeris_grid_navigation` | Python | Occupancy grid, A* shortest path and go-to-goal/return execution |
+| `aeris_grid_gui` | Python + PyQt5 | Goal selection and live progress display |
 | `aeris_bringup` | Python | Launch files and configuration |
 
 `px4_msgs` is an external Git submodule pinned to PX4 `v1.17.0`. It provides the DDS message definitions that match the simulated firmware.
 
 ## Planned packages
 
-Week 7 adds evaluation tooling rather than new flight packages. Benchmark scripts and reports live under `scripts/` and `docs/experiments/`.
+All planned flight packages are implemented. Week 7 evaluation tooling lives under `scripts/` and `docs/experiments/`.
 
 Packages are added when their milestone starts. This keeps the build small and ensures every package has an owner and an acceptance test.
 

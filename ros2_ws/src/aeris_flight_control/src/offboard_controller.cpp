@@ -281,7 +281,9 @@ private:
     const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
     std::shared_ptr<std_srvs::srv::Trigger::Response> response)
   {
-    if (state_ != State::WAIT_FOR_READY) {
+    const bool restart =
+      state_ == State::DONE || state_ == State::ABORTED;
+    if (state_ != State::WAIT_FOR_READY && !restart) {
       response->success = false;
       response->message = std::string("mission already active (state=") +
         state_name(state_) + ")";
@@ -292,6 +294,10 @@ private:
       response->success = false;
       response->message = "not ready: " + readiness_reason();
       return;
+    }
+
+    if (restart) {
+      transition_to(State::WAIT_FOR_READY, "restart accepted");
     }
 
     start_requested_ = true;

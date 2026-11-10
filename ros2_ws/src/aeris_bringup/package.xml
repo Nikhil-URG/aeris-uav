@@ -16,6 +16,8 @@
   <exec_depend>aeris_perception</exec_depend>
   <exec_depend>aeris_navigation</exec_depend>
   <exec_depend>aeris_safety</exec_depend>
+  <exec_depend>aeris_grid_navigation</exec_depend>
+  <exec_depend>aeris_grid_gui</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
 
   <export>

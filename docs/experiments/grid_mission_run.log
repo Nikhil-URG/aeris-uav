@@ -1,0 +1,149 @@
+[safety_node-3] [INFO] [1794304222.890135722] [aeris_safety]: AERIS safety initialized: status='/aeris/safety/status', pose_timeout=1.0 s, battery_min=0.25, geofence=45.0 m, heartbeat_timeout=3.0 s.
+[safety_node-3] [INFO] [1794304222.890262000] [aeris_safety]: Services: aeris_safety/inject_fault, aeris_safety/clear_faults
+[offboard_controller-2] [INFO] [1794304222.894690694] [aeris_offboard_controller]: AERIS offboard controller initialized: auto_start=false, takeoff=5.0 m, setpoint_rate=20.0 Hz, prestream=2.0 s, hold=10.0 s, auto_land_after_hold=false.
+[offboard_controller-2] [INFO] [1794304222.894747415] [aeris_offboard_controller]: Services: aeris_offboard_controller/start, aeris_offboard_controller/go_to, aeris_offboard_controller/hold, aeris_offboard_controller/land, aeris_offboard_controller/rtl, aeris_offboard_controller/abort
+[offboard_controller-2] [INFO] [1794304222.994853673] [aeris_offboard_controller]: Waiting for takeoff readiness: waiting for /fmu/out/vehicle_local_position_v1
+[grid_navigation-4] [INFO] [1794304223.233577748] [aeris_grid_navigation]: Grid navigation loaded 'city_grid': 11x11 cells, cell=4.0 m, start=(5,5), buildings=12, occupied=44.
+[grid_navigation-4] [INFO] [1794304223.234340209] [aeris_grid_navigation]: Service: aeris_grid_navigation/set_goal; status: /aeris/grid/status
+[offboard_controller-2] [INFO] [1794304224.995047973] [aeris_offboard_controller]: Waiting for takeoff readiness: waiting for /fmu/out/vehicle_local_position_v1
+[offboard_controller-2] [INFO] [1794304226.294923634] [aeris_offboard_controller]: Ready for takeoff. Waiting for the start service.
+[grid_navigation-4] [INFO] [1794304228.602178940] [aeris_grid_navigation]: Grid mission log: results/logs/grid_20261110_105028/grid.jsonl
+[grid_navigation-4] [INFO] [1794304228.605031749] [aeris_grid_navigation]: [PREFLIGHT] starting offboard controller
+[offboard_controller-2] [INFO] [1794304228.694862057] [aeris_offboard_controller]: Starting mission at NED (-0.04, -0.02, -0.04), yaw=1.66 rad; target altitude=5.0 m.
+[offboard_controller-2] [INFO] [1794304228.694903251] [aeris_offboard_controller]: State WAIT_FOR_READY -> PRESTREAM: start accepted
+[offboard_controller-2] [INFO] [1794304230.795089794] [aeris_offboard_controller]: State PRESTREAM -> REQUEST_OFFBOARD: offboard prestream complete
+[offboard_controller-2] [INFO] [1794304230.795479636] [aeris_offboard_controller]: Requesting OFFBOARD mode.
+[offboard_controller-2] [INFO] [1794304230.813775824] [aeris_offboard_controller]: Command ack: DO_SET_MODE accepted (result=0).
+[offboard_controller-2] [INFO] [1794304230.995195706] [aeris_offboard_controller]: State REQUEST_OFFBOARD -> ARM: offboard mode confirmed
+[offboard_controller-2] [INFO] [1794304230.995557605] [aeris_offboard_controller]: Requesting arming.
+[offboard_controller-2] [INFO] [1794304231.005931121] [aeris_offboard_controller]: Command ack: ARM_DISARM accepted (result=0).
+[offboard_controller-2] [INFO] [1794304231.194967354] [aeris_offboard_controller]: State ARM -> TAKEOFF: vehicle armed
+[offboard_controller-2] [INFO] [1794304231.295000092] [aeris_offboard_controller]: TAKEOFF: z=-0.04 target_z=-0.15 vz=-0.00 altitude_error=4.96
+[offboard_controller-2] [INFO] [1794304232.295007780] [aeris_offboard_controller]: TAKEOFF: z=-0.03 target_z=-1.15 vz=0.00 altitude_error=4.97
+[offboard_controller-2] [INFO] [1794304233.395396806] [aeris_offboard_controller]: TAKEOFF: z=-0.02 target_z=-2.25 vz=0.00 altitude_error=4.98
+[offboard_controller-2] [INFO] [1794304234.495075856] [aeris_offboard_controller]: TAKEOFF: z=-0.12 target_z=-3.35 vz=-0.64 altitude_error=4.88
+[offboard_controller-2] [INFO] [1794304235.595027624] [aeris_offboard_controller]: TAKEOFF: z=-2.12 target_z=-4.45 vz=-1.99 altitude_error=2.88
+[offboard_controller-2] [INFO] [1794304236.694858767] [aeris_offboard_controller]: TAKEOFF: z=-3.80 target_z=-5.00 vz=-1.08 altitude_error=1.20
+[offboard_controller-2] [INFO] [1794304237.794893182] [aeris_offboard_controller]: TAKEOFF: z=-4.45 target_z=-5.00 vz=-0.37 altitude_error=0.55
+[offboard_controller-2] [INFO] [1794304238.794939782] [aeris_offboard_controller]: TAKEOFF: z=-4.69 target_z=-5.00 vz=-0.19 altitude_error=0.31
+[offboard_controller-2] [INFO] [1794304238.894947923] [aeris_offboard_controller]: State TAKEOFF -> HOLD: takeoff altitude reached
+[offboard_controller-2] [INFO] [1794304238.994972734] [aeris_offboard_controller]: HOLD: position=(-0.04, -0.02, -4.72) target=(-0.04, -0.02, -5.00) error=0.28 m
+[grid_navigation-4] [INFO] [1794304239.021420112] [aeris_grid_navigation]: [TRANSIT] navigating to (0, 0)
+[offboard_controller-2] [INFO] [1794304239.023110191] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304239.094988937] [aeris_offboard_controller]: TRANSIT: position=(-0.04, -0.02, -4.74) target=(-4.00, 0.00, -5.00) error=3.96 m
+[offboard_controller-2] [INFO] [1794304240.095019679] [aeris_offboard_controller]: TRANSIT: position=(-1.66, 0.08, -4.87) target=(-4.00, 0.00, -5.00) error=2.35 m
+[offboard_controller-2] [INFO] [1794304240.695358456] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304240.794988858] [aeris_offboard_controller]: HOLD: position=(-3.43, 0.13, -4.90) target=(-4.00, 0.00, -5.00) error=0.59 m
+[offboard_controller-2] [INFO] [1794304240.800703686] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304241.195074433] [aeris_offboard_controller]: TRANSIT: position=(-4.00, 0.08, -4.97) target=(-8.00, 0.00, -5.00) error=4.00 m
+[offboard_controller-2] [INFO] [1794304242.295049789] [aeris_offboard_controller]: TRANSIT: position=(-7.01, -0.01, -4.94) target=(-8.00, 0.00, -5.00) error=0.99 m
+[offboard_controller-2] [INFO] [1794304242.394954402] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304242.494939316] [aeris_offboard_controller]: HOLD: position=(-7.43, -0.02, -4.95) target=(-8.00, 0.00, -5.00) error=0.57 m
+[offboard_controller-2] [INFO] [1794304242.529880984] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304243.394993989] [aeris_offboard_controller]: TRANSIT: position=(-9.31, -0.03, -4.99) target=(-12.00, 0.00, -5.00) error=2.69 m
+[offboard_controller-2] [INFO] [1794304244.095001957] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304244.195026038] [aeris_offboard_controller]: HOLD: position=(-11.47, -0.04, -4.97) target=(-12.00, 0.00, -5.00) error=0.53 m
+[offboard_controller-2] [INFO] [1794304244.208920287] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304244.495647191] [aeris_offboard_controller]: TRANSIT: position=(-11.91, -0.04, -5.00) target=(-16.00, 0.00, -5.00) error=4.09 m
+[offboard_controller-2] [INFO] [1794304245.594993755] [aeris_offboard_controller]: TRANSIT: position=(-14.81, -0.03, -4.97) target=(-16.00, 0.00, -5.00) error=1.19 m
+[offboard_controller-2] [INFO] [1794304245.795026617] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304245.894856284] [aeris_offboard_controller]: HOLD: position=(-15.49, -0.02, -4.97) target=(-16.00, 0.00, -5.00) error=0.51 m
+[offboard_controller-2] [INFO] [1794304245.936418896] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304246.694942629] [aeris_offboard_controller]: TRANSIT: position=(-17.02, -0.01, -5.02) target=(-20.00, 0.00, -5.00) error=2.98 m
+[offboard_controller-2] [INFO] [1794304247.495227255] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304247.595316500] [aeris_offboard_controller]: HOLD: position=(-19.47, -0.01, -4.98) target=(-20.00, 0.00, -5.00) error=0.53 m
+[offboard_controller-2] [INFO] [1794304247.615363653] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304247.795098548] [aeris_offboard_controller]: TRANSIT: position=(-19.78, -0.01, -4.99) target=(-20.00, -4.00, -5.00) error=4.00 m
+[offboard_controller-2] [INFO] [1794304248.895241861] [aeris_offboard_controller]: TRANSIT: position=(-20.23, -2.21, -4.98) target=(-20.00, -4.00, -5.00) error=1.80 m
+[offboard_controller-2] [INFO] [1794304249.395121728] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304249.494953909] [aeris_offboard_controller]: HOLD: position=(-20.10, -3.52, -4.98) target=(-20.00, -4.00, -5.00) error=0.49 m
+[offboard_controller-2] [INFO] [1794304249.543622236] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304249.895251072] [aeris_offboard_controller]: TRANSIT: position=(-20.05, -4.00, -5.04) target=(-20.00, -8.00, -5.00) error=4.00 m
+[offboard_controller-2] [INFO] [1794304250.994979026] [aeris_offboard_controller]: TRANSIT: position=(-20.01, -6.94, -5.00) target=(-20.00, -8.00, -5.00) error=1.06 m
+[offboard_controller-2] [INFO] [1794304251.195069918] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304251.294869119] [aeris_offboard_controller]: HOLD: position=(-20.00, -7.55, -5.00) target=(-20.00, -8.00, -5.00) error=0.45 m
+[offboard_controller-2] [INFO] [1794304251.322096510] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304252.094812109] [aeris_offboard_controller]: TRANSIT: position=(-19.97, -9.10, -5.02) target=(-20.00, -12.00, -5.00) error=2.90 m
+[offboard_controller-2] [INFO] [1794304252.894857828] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304252.995055748] [aeris_offboard_controller]: HOLD: position=(-19.95, -11.49, -4.98) target=(-20.00, -12.00, -5.00) error=0.51 m
+[offboard_controller-2] [INFO] [1794304252.998962350] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304253.094951822] [aeris_offboard_controller]: TRANSIT: position=(-19.94, -11.67, -4.98) target=(-20.00, -16.00, -5.00) error=4.33 m
+[offboard_controller-2] [INFO] [1794304254.194931607] [aeris_offboard_controller]: TRANSIT: position=(-19.93, -14.37, -4.98) target=(-20.00, -16.00, -5.00) error=1.64 m
+[offboard_controller-2] [INFO] [1794304254.595089882] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304254.695184307] [aeris_offboard_controller]: HOLD: position=(-19.93, -15.53, -4.98) target=(-20.00, -16.00, -5.00) error=0.48 m
+[offboard_controller-2] [INFO] [1794304254.726969111] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304255.294991027] [aeris_offboard_controller]: TRANSIT: position=(-19.93, -16.52, -5.05) target=(-20.00, -20.00, -5.00) error=3.48 m
+[offboard_controller-2] [INFO] [1794304256.294973301] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304256.395020378] [aeris_offboard_controller]: HOLD: position=(-19.94, -19.48, -4.97) target=(-20.00, -20.00, -5.00) error=0.53 m
+[grid_navigation-4] [INFO] [1794304256.405685913] [aeris_grid_navigation]: [AT_GOAL] goal (0, 0) reached
+[offboard_controller-2] [INFO] [1794304257.494807071] [aeris_offboard_controller]: HOLD: position=(-19.93, -20.23, -4.96) target=(-20.00, -20.00, -5.00) error=0.24 m
+[offboard_controller-2] [INFO] [1794304258.495052097] [aeris_offboard_controller]: HOLD: position=(-19.95, -20.10, -4.97) target=(-20.00, -20.00, -5.00) error=0.11 m
+[grid_navigation-4] [INFO] [1794304259.407453833] [aeris_grid_navigation]: [RETURNING] returning to start
+[offboard_controller-2] [INFO] [1794304259.408344914] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304259.495040495] [aeris_offboard_controller]: TRANSIT: position=(-19.99, -20.00, -4.99) target=(-16.00, -20.00, -5.00) error=3.99 m
+[offboard_controller-2] [INFO] [1794304260.495272228] [aeris_offboard_controller]: TRANSIT: position=(-18.32, -19.94, -5.01) target=(-16.00, -20.00, -5.00) error=2.32 m
+[offboard_controller-2] [INFO] [1794304261.095097619] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304261.195067322] [aeris_offboard_controller]: HOLD: position=(-16.54, -19.93, -4.98) target=(-16.00, -20.00, -5.00) error=0.55 m
+[offboard_controller-2] [INFO] [1794304261.236752718] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304261.595352213] [aeris_offboard_controller]: TRANSIT: position=(-15.98, -19.93, -5.04) target=(-12.00, -20.00, -5.00) error=3.98 m
+[offboard_controller-2] [INFO] [1794304262.695149968] [aeris_offboard_controller]: TRANSIT: position=(-12.99, -19.93, -4.99) target=(-12.00, -20.00, -5.00) error=0.99 m
+[offboard_controller-2] [INFO] [1794304262.795250727] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304262.895172703] [aeris_offboard_controller]: HOLD: position=(-12.57, -19.93, -4.99) target=(-12.00, -20.00, -5.00) error=0.58 m
+[offboard_controller-2] [INFO] [1794304262.920006789] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304263.794994729] [aeris_offboard_controller]: TRANSIT: position=(-10.70, -19.95, -5.02) target=(-8.00, -20.00, -5.00) error=2.70 m
+[offboard_controller-2] [INFO] [1794304264.495033732] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304264.594943879] [aeris_offboard_controller]: HOLD: position=(-8.51, -19.94, -4.98) target=(-8.00, -20.00, -5.00) error=0.51 m
+[offboard_controller-2] [INFO] [1794304264.601717714] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304264.895054866] [aeris_offboard_controller]: TRANSIT: position=(-8.07, -19.94, -5.01) target=(-4.00, -20.00, -5.00) error=4.07 m
+[offboard_controller-2] [INFO] [1794304265.994971903] [aeris_offboard_controller]: TRANSIT: position=(-5.12, -19.96, -4.98) target=(-4.00, -20.00, -5.00) error=1.12 m
+[offboard_controller-2] [INFO] [1794304266.195006793] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304266.294807765] [aeris_offboard_controller]: HOLD: position=(-4.43, -19.97, -4.98) target=(-4.00, -20.00, -5.00) error=0.43 m
+[offboard_controller-2] [INFO] [1794304266.332603474] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304267.094928933] [aeris_offboard_controller]: TRANSIT: position=(-2.96, -19.98, -5.03) target=(0.00, -20.00, -5.00) error=2.96 m
+[offboard_controller-2] [INFO] [1794304267.895092102] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304267.994969428] [aeris_offboard_controller]: HOLD: position=(-0.50, -19.98, -4.99) target=(0.00, -20.00, -5.00) error=0.50 m
+[offboard_controller-2] [INFO] [1794304268.008531761] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304268.195400583] [aeris_offboard_controller]: TRANSIT: position=(-0.19, -19.98, -5.00) target=(0.00, -16.00, -5.00) error=3.98 m
+[offboard_controller-2] [INFO] [1794304269.295380027] [aeris_offboard_controller]: TRANSIT: position=(0.24, -17.70, -4.99) target=(0.00, -16.00, -5.00) error=1.72 m
+[offboard_controller-2] [INFO] [1794304269.695072763] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304269.795078228] [aeris_offboard_controller]: HOLD: position=(0.16, -16.54, -4.99) target=(0.00, -16.00, -5.00) error=0.56 m
+[offboard_controller-2] [INFO] [1794304269.838350225] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304270.395365270] [aeris_offboard_controller]: TRANSIT: position=(0.07, -15.60, -5.06) target=(0.00, -12.00, -5.00) error=3.61 m
+[offboard_controller-2] [INFO] [1794304271.395074521] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304271.495076910] [aeris_offboard_controller]: HOLD: position=(0.01, -12.60, -4.99) target=(0.00, -12.00, -5.00) error=0.60 m
+[offboard_controller-2] [INFO] [1794304271.517428487] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304271.595135614] [aeris_offboard_controller]: TRANSIT: position=(0.00, -12.42, -4.99) target=(0.00, -8.00, -5.00) error=4.42 m
+[offboard_controller-2] [INFO] [1794304272.595152549] [aeris_offboard_controller]: TRANSIT: position=(-0.04, -10.03, -5.00) target=(0.00, -8.00, -5.00) error=2.03 m
+[offboard_controller-2] [INFO] [1794304273.095082999] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304273.195308107] [aeris_offboard_controller]: HOLD: position=(-0.05, -8.47, -4.98) target=(0.00, -8.00, -5.00) error=0.47 m
+[offboard_controller-2] [INFO] [1794304273.245859877] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304273.596002290] [aeris_offboard_controller]: TRANSIT: position=(-0.05, -7.89, -5.02) target=(0.00, -4.00, -5.00) error=3.89 m
+[offboard_controller-2] [INFO] [1794304274.695001408] [aeris_offboard_controller]: TRANSIT: position=(-0.08, -5.05, -4.99) target=(0.00, -4.00, -5.00) error=1.05 m
+[offboard_controller-2] [INFO] [1794304274.894950988] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304274.995090481] [aeris_offboard_controller]: HOLD: position=(-0.08, -4.41, -4.99) target=(0.00, -4.00, -5.00) error=0.42 m
+[offboard_controller-2] [INFO] [1794304275.024389870] [aeris_offboard_controller]: State HOLD -> TRANSIT: goal accepted
+[offboard_controller-2] [INFO] [1794304275.695020241] [aeris_offboard_controller]: TRANSIT: position=(-0.06, -3.22, -5.02) target=(0.00, 0.00, -5.00) error=3.22 m
+[offboard_controller-2] [INFO] [1794304276.594987855] [aeris_offboard_controller]: State TRANSIT -> HOLD: waypoint reached
+[offboard_controller-2] [INFO] [1794304276.695028793] [aeris_offboard_controller]: HOLD: position=(-0.07, -0.53, -4.96) target=(0.00, 0.00, -5.00) error=0.53 m
+[grid_navigation-4] [INFO] [1794304276.705524701] [aeris_grid_navigation]: [LANDING] landing at start
+[offboard_controller-2] [INFO] [1794304276.795178370] [aeris_offboard_controller]: State HOLD -> LAND: land requested
+[offboard_controller-2] [INFO] [1794304276.795394254] [aeris_offboard_controller]: Requesting landing at current position.
+[offboard_controller-2] [INFO] [1794304276.803408998] [aeris_offboard_controller]: Command ack: NAV_LAND accepted (result=0).
+[offboard_controller-2] [INFO] [1794304276.894948605] [aeris_offboard_controller]: Landing mode active; offboard stream stopped.
+[offboard_controller-2] [INFO] [1794304276.894998258] [aeris_offboard_controller]: LAND: altitude=-4.96 m, waiting for disarm.
+[offboard_controller-2] [INFO] [1794304278.994961584] [aeris_offboard_controller]: LAND: altitude=-3.83 m, waiting for disarm.
+[offboard_controller-2] [INFO] [1794304280.995156599] [aeris_offboard_controller]: LAND: altitude=-2.47 m, waiting for disarm.
+[offboard_controller-2] [INFO] [1794304283.095125542] [aeris_offboard_controller]: LAND: altitude=-0.99 m, waiting for disarm.
+[offboard_controller-2] [INFO] [1794304285.194934592] [aeris_offboard_controller]: LAND: altitude=-0.01 m, waiting for disarm.
+[offboard_controller-2] [INFO] [1794304287.195061322] [aeris_offboard_controller]: LAND: altitude=-0.02 m, waiting for disarm.
+[offboard_controller-2] [INFO] [1794304287.795861194] [aeris_offboard_controller]: Restoring AUTO_LOITER mode after landing.
+[offboard_controller-2] [INFO] [1794304287.795905083] [aeris_offboard_controller]: State LAND -> DONE: landed and disarmed
+[offboard_controller-2] [INFO] [1794304287.795913813] [aeris_offboard_controller]: Mission summary: state=DONE position=(-0.05, 1.11, -0.02) target=(0.00, 0.00, -5.00).
+[offboard_controller-2] [INFO] [1794304287.806173176] [aeris_offboard_controller]: Command ack: DO_SET_MODE accepted (result=0).
+[grid_navigation-4] [INFO] [1794304287.823546928] [aeris_grid_navigation]: [DONE] grid mission complete
+[grid_navigation-4] [INFO] [1794304373.927408835] [aeris_grid_navigation]: Grid mission log: results/logs/grid_20261110_105253/grid.jsonl
+[grid_navigation-4] [INFO] [1794304373.928583508] [aeris_grid_navigation]: [PREFLIGHT] starting offboard controller
+[grid_navigation-4] [ERROR] [1794304373.953153845] [aeris_grid_navigation]: Grid mission failed: offboard start rejected: mission already active (state=DONE)
+[grid_navigation-4] [INFO] [1794304483.824277618] [aeris_grid_navigation]: Grid mission log: results/logs/grid_20261110_105443/grid.jsonl
+[grid_navigation-4] [INFO] [1794304483.825057396] [aeris_grid_navigation]: [PREFLIGHT] starting offboard controller
+[grid_navigation-4] [ERROR] [1794304483.846719493] [aeris_grid_navigation]: Grid mission failed: offboard start rejected: mission already active (state=DONE)

@@ -143,6 +143,18 @@ if command -v ros2 >/dev/null 2>&1; then
     warn "safety_node executable missing; rebuild the workspace"
   fi
 
+  if ros2 pkg executables aeris_grid_navigation 2>/dev/null | grep -q 'grid_navigation'; then
+    ok "grid_navigation executable available"
+  else
+    warn "grid_navigation executable missing; rebuild the workspace"
+  fi
+
+  if ros2 pkg executables aeris_grid_gui 2>/dev/null | grep -q 'grid_gui'; then
+    ok "grid_gui executable available"
+  else
+    warn "grid_gui executable missing; rebuild the workspace"
+  fi
+
   if ros2 pkg list 2>/dev/null | grep -q '^ros_gz_bridge$'; then
     ok "ros_gz_bridge installed"
   else

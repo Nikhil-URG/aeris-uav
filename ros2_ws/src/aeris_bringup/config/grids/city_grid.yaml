@@ -1,0 +1,28 @@
+grid:
+  name: city_grid
+  width: 11
+  height: 11
+  cell_size_m: 4.0
+  start:
+    x: 5
+    y: 5
+  cruise_altitude_m: 5.0
+
+  # Buildings are axis-aligned blocks of occupied cells.
+  # x/y are the minimum cell indices, width/height are in cells.
+  # height_m is the Gazebo box height; all are above the 5 m cruise altitude.
+  buildings:
+    - {x: 1, y: 1, width: 3, height: 3, height_m: 12.0}
+    - {x: 7, y: 1, width: 3, height: 3, height_m: 14.0}
+    - {x: 1, y: 7, width: 3, height: 3, height_m: 10.0}
+    - {x: 7, y: 7, width: 3, height: 3, height_m: 16.0}
+
+    - {x: 4, y: 1, width: 1, height: 1, height_m: 9.0}
+    - {x: 6, y: 1, width: 1, height: 1, height_m: 11.0}
+    - {x: 4, y: 9, width: 1, height: 1, height_m: 9.0}
+    - {x: 6, y: 9, width: 1, height: 1, height_m: 13.0}
+
+    - {x: 1, y: 4, width: 1, height: 1, height_m: 10.0}
+    - {x: 1, y: 6, width: 1, height: 1, height_m: 12.0}
+    - {x: 9, y: 4, width: 1, height: 1, height_m: 11.0}
+    - {x: 9, y: 6, width: 1, height: 1, height_m: 15.0}

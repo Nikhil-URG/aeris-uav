@@ -133,12 +133,37 @@ RTL cases.
 | Obstacle detections | 1 |
 | Replans | 1 |
 | Safety faults exercised | stale pose, low battery, geofence breach, heartbeat loss |
-| ROS package tests | 32/32 |
+| ROS package tests | 42/42 |
 | Evaluator tests | 4/4 |
-| Environment check | 18 ok, 0 warnings, 0 failures |
+| Environment check | 20 ok, 0 warnings, 0 failures |
 
 The completed-mission mean includes the Week 6 safety mission with a 30 s
 inspection hold; the three standard inspection missions took 33.8–36.5 s.
+
+### 4.1 City-grid navigation extension
+
+The post-Week-7 grid extension uses an 11×11 city map (4 m cells, 12 buildings,
+44 occupied cells) and A* with no corner cutting.
+
+| Metric | Result |
+|---|---|
+| Missions completed | 3/3 |
+| Corner goal `(0,0)` | 11 cells / 40 m out, 40 m return |
+| Opposite corner `(10,10)` | 11 cells / 40 m out, 40 m return |
+| Short repeat goal `(2,5)` from `DONE` | 4 cells / 12 m out, 12 m return |
+| Path cells occupied | 0 |
+| Logged flight positions checked | 131 |
+| Minimum building clearance | 2.269 m |
+| Positions inside buildings | 0 |
+| Repeated goal without stack restart | PASS |
+| Planner tests | 9/9 |
+| GUI click test | 1/1 |
+
+GUI screenshot: `docs/experiments/plots/grid_gui_repeat.png`. Full details:
+[grid_navigation.md](grid_navigation.md).
+
+The grid mission returns to the start cell and lands after every goal, and the
+offboard controller accepts a new goal after `DONE`.
 
 ## 5. Plots
 
@@ -176,6 +201,11 @@ and the demo runbook in [demo.md](demo.md).
   not claimed.
 - **The obstacle threshold is tuned.** The 4 m corridor threshold was chosen
   for the simulated obstacle geometry and local/world frame offset.
+- **The grid map is static and 2D.** Buildings are axis-aligned occupied
+  cells; there are no dynamic obstacles, arbitrary footprints or no-fly zones.
+- **The grid demo uses the non-camera airframe.** The camera + large city world
+  caused a Gazebo server crash during a long flight in this environment; the
+  grid feature uses `gz_x500`, which is stable and sufficient for navigation.
 - **Demo video is not checked in.** A recording runbook and expected outputs
   are provided instead; recording is an operator step.
 
@@ -189,7 +219,9 @@ obstacle-avoidance and safety scenarios:
 - the obstacle was detected at 3.75 m and avoided with a lateral replan;
 - all four injected safety faults produced the correct land/RTL action and a
   disarmed vehicle;
-- 36 automated tests and 18 environment checks passed.
+- the city-grid planner completed three goal/return missions with 2.269 m
+  minimum building clearance and zero path intrusions;
+- 46 automated tests (42 ROS + 4 evaluator) and 20 environment checks passed.
 
 The remaining gaps are the expected ones for a simulated prototype:
 statistical repetition, hardware validation, calibrated perception, and a
